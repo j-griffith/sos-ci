@@ -30,11 +30,10 @@ class InstanceBuildException(Exception):
         Exception.__init__(self, message)
 
 def _filter_cinder_events(event):
-    return event
 
     if (event.get('type', 'nill') == 'comment-added' and
-        'Verified+1' in event['comment']):
-        # add: PROJECT in event['change']['project'] above
+        'Verified+1' in event['comment'] and
+        PROJECT in event['change']['project']):
         if event['author']['username'] == 'jenkins':
             print ('Adding review id %s to job queue...' %
                    event['change']['number'])
