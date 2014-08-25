@@ -9,6 +9,7 @@ import sys
 from threading import Thread
 import time
 
+import executor
 import instance
 
 
@@ -56,13 +57,6 @@ class JobThread(Thread):
     def _delete_instance(self, instance):
         instance.delete_instance()
 
-
-    def _run_tempest_suite(self, instance, event):
-        pass
-
-    def _publish_results_to_web(self, instance):
-        pass
-
     def _publish_results_to_gerrit(self, event, result):
         pass
 
@@ -77,8 +71,10 @@ class JobThread(Thread):
                 name = ('review-%s' % event['change']['number'])
                 try:
                     instance = self._launch_instance(name)
-                    # TODO: Run dsvm-full
-                    time.sleep(60)
+                    result = executor.just_doit(instance.networks['private'][0],
+                                                KEY_NAME,
+                                                event['patchSet']['ref'])
+                    print "Results from tempest: %s" % result
                 except InstanceBuildException:
                     pass
 
