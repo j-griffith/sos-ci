@@ -1,0 +1,29 @@
+- hosts: devstack_instances
+  tasks:
+
+  - name: install pkgs
+    sudo: yes
+    apt: pkg={{ item }} state=present
+    with_items:
+      - git
+      - vim
+
+  - name: verify git and vim
+    sudo: yes
+    apt: pkg=git state=present
+    apt: pkg=vim state=present
+
+  - name: clone devstack
+    sudo: no
+    git: repo=https://github.com/openstack-dev/devstack dest=~/devstack
+
+  - name: send over local.conf
+    sudo: no
+    template: src=../../templates/localconf.base dest=/home/ubuntu/devstack/local.conf
+
+  - name: modify cinder_branch
+    lineinfile: dest=/home/ubuntu/devstack/local.conf regexp=^CINDER_BRANCH= line=CINDER_BRANCH="{{ patchset_ref }}"
+
+  - name: run stack.sh
+    sudo: no
+    shell: ~/devstack/stack.sh 2>&1 > /tmp/stack.sh.log

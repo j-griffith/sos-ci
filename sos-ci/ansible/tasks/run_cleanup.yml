@@ -1,0 +1,25 @@
+- hosts: devstack_instances
+  tasks:
+
+  - name: send over upload script
+    sudo: no
+    template: src=../../scripts/upload_logs.sh dest=/home/ubuntu/
+
+  - name: run upload
+    sudo: yes
+    shell: bash ./upload_logs.sh LOGS
+    args:
+      chdir: /home/ubuntu
+
+  - name: fetch logs
+    fetch: src=/home/ubuntu/LOGS.tar dest=/tmp/LOGS.tar flat=yes validate_md5=no
+
+  #- name: Shut down instance
+  #  nova_compute:
+  #    state: absent
+  #    login_username: "{{ os_login }}"
+  #    login_password: "{{ os_password }}"
+  #    login_tenant_name: "{{ os_tenant_name }}"
+  #    auth_url: "{{ auth_url }}"
+  #    name: "{{ instance_name }}"
+

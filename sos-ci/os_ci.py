@@ -45,20 +45,42 @@ def _filter_cinder_events(event):
 
 class JobThread(Thread):
     """ Thread to process the gerrit events. """
-    def _launch_instance(self, name):
-        test_instance = instance.Instance(name)
-        timeout = 90
-        if test_instance.wait_for_ready(timeout=timeout):
-            return test_instance
-        else:
-            print "Instance failed to build after 90 seconds!!"
-            raise InstanceBuildException('Instance failed to become ready after %s seconds' % timeout)
 
-    def _delete_instance(self, instance):
-        instance.delete_instance()
-
-    def _publish_results_to_gerrit(self, event, result):
+    def _upload_results_to_web(self):
         pass
+
+    def _post_results_to_gerrit(self, log_location, passed, commit_id):
+        #ssh -p 29418 USERNAME@review.openstack.org gerrit review -m '"Test failed on MegaTestSystem <http://megatestsystem.org/tests/1234>"' --verified=-1 c0ff33
+        cmd = ""
+        if passed:
+            cmd = '"Test sfci-dsvm-volume passed on SolidFire CI System %s" --verified=+1 %s' % (log_location, commit_id)
+        else:
+            cmd = '"Test sfci-dsvm-volume failed on SolidFire CI System %s" --verified=-1 %s' % (log_location, commit_id)
+
+        self.username = CI_ACCOUNT
+        self.key_file = CI_KEYFILE
+        self.host = OS_REVIEW_HOST
+        self.port = OS_REVIEW_HOST_PORT
+        print ('Connecting to gerrit stream with %s@%s:%d '
+               'using keyfile %s' % (self.username,
+                                     self.host,
+                                     self.port,
+                                     self.key_file))
+
+        self.ssh = paramiko.SSHClient()
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            self.ssh.connect(self.host,
+                             self.port,
+                             self.username,
+                             key_filename=self.key_file)
+        except paramiko.SSHException as e:
+            print e
+            sys.exit(1)
+
+        self.stdin, self.stdout, self.stderr =\
+            self.ssh.exec_command(cmd)
+
 
     def run(self):
         while True:
@@ -70,7 +92,6 @@ class JobThread(Thread):
                 # Launch instance, run tempest etc etc etc
                 name = ('review-%s' % event['change']['number'])
                 try:
-                    instance = self._launch_instance(name)
                     result = executor.just_doit(instance.networks['private'][0],
                                                 KEY_NAME,
                                                 event['patchSet']['ref'])
@@ -78,7 +99,6 @@ class JobThread(Thread):
                 except InstanceBuildException:
                     pass
 
-                self._delete_instance(instance)
                 print "Completed %s-dsvm-full" % CI_NAME
                 print "Events in queue: %s" % len(event_queue)
 
