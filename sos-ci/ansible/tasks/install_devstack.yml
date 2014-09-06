@@ -22,7 +22,7 @@
     template: src=../../templates/localconf.base dest=/home/ubuntu/devstack/local.conf
 
   - name: modify cinder_branch
-    lineinfile: dest=/home/ubuntu/devstack/local.conf regexp=^CINDER_BRANCH= line=CINDER_BRANCH="{{ patchset_ref }}"
+    lineinfile: dest=/home/ubuntu/devstack/local.conf regexp=^CINDER_BRANCH= line=CINDER_BRANCH={{ patchset_ref }}
 
   - name: run stack.sh
     sudo: no

@@ -7,19 +7,23 @@
 
   - name: run upload
     sudo: yes
-    shell: bash ./upload_logs.sh LOGS
+    shell: bash ./upload_logs.sh /home/ubuntu/{{ instance_name }}
     args:
       chdir: /home/ubuntu
 
   - name: fetch logs
-    fetch: src=/home/ubuntu/LOGS.tar dest=/tmp/LOGS.tar flat=yes validate_md5=no
+    sudo: yes
+    fetch: src=/home/ubuntu/{{ instance_name }}.tar dest=../../logs/ flat=yes validate_md5=no
 
-  #- name: Shut down instance
-  #  nova_compute:
-  #    state: absent
-  #    login_username: "{{ os_login }}"
-  #    login_password: "{{ os_password }}"
-  #    login_tenant_name: "{{ os_tenant_name }}"
-  #    auth_url: "{{ auth_url }}"
-  #    name: "{{ instance_name }}"
+#  - name: debug
+#    debug: var=hostvars[inventory_hostname]
+
+  - name: Shut down instance
+    nova_compute:
+      state: absent
+      login_username: "{{ os_login }}"
+      login_password: "{{ os_password }}"
+      login_tenant_name: "{{ os_tenant_name }}"
+      auth_url: "{{ auth_url }}"
+      name: "{{ instance_name }}"
 
