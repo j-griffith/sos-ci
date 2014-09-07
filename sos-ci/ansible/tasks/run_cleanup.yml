@@ -11,13 +11,16 @@
     args:
       chdir: /home/ubuntu
 
+  - name: fetch tempest_results
+    sudo: yes
+    fetch: src=/opt/stack/tempest/console.log.out dest=../../logs/{{ instance_name }}.console flat=yes validate_md5=no
+
   - name: fetch logs
     sudo: yes
     fetch: src=/home/ubuntu/{{ instance_name }}.tar dest=../../logs/ flat=yes validate_md5=no
 
-#  - name: debug
-#    debug: var=hostvars[inventory_hostname]
-
+- hosts: localhost
+  tasks:
   - name: Shut down instance
     nova_compute:
       state: absent
@@ -26,4 +29,3 @@
       login_tenant_name: "{{ os_tenant_name }}"
       auth_url: "{{ auth_url }}"
       name: "{{ instance_name }}"
-

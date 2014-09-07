@@ -39,9 +39,12 @@ Some highlighted points, and maybe answers to some questions.
   Use what you like and what you have, but you can always just use good old simple
   python with ssh.
 
+Stats
+-----
+stack-time             : 20:41
+stack-time with squid  :
+stack-time with preseed:
+
 Questions
 ---------
 
-- Q. Why not Puppet, Chef, Ansible, Salt.......
-  A. Yeah, wanted to get a POC with none of the above.  Next item on my list is to pull
-     some Ansible playbooks that I have into instance and job modules as options for use.

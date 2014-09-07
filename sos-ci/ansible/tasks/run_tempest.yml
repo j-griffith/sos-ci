@@ -8,6 +8,6 @@
   - name: run tempest
     sudo: no
     sudo: no
-    shell: tools/pretty_tox.sh volume | tee -a console.log.out
+    shell: tools/pretty_tox.sh api.volume | tee -a console.log.out
     args:
       chdir: /opt/stack/tempest

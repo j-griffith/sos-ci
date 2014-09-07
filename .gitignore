@@ -1,1 +1,4 @@
 *.tar
+*.swp
+*.pyc
+sos-ci/logs/*

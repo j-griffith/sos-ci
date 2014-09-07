@@ -7,12 +7,12 @@ this is super straight forward and it works so we'll use it for now.
 
 TODO:
 * Clean up the vars mess we've got going on
-  Make things more dynamic and configurable (env vars?)
+  Make things more dynamic and configurable (env vars, ansible vars file?)
 
 """
 
 def just_doit(patchset_ref):
-    """ Do the dirty work. """
+    """ Do the dirty work, or let ansible do it. """
 
     # patchset_ref is valid_event['patchSet']['ref']
     # ( refs/changes/21/111421/7 )
@@ -23,6 +23,10 @@ def just_doit(patchset_ref):
     vars += " patchset_ref=%s" % patchset_ref
     cmd = '/usr/local/bin/ansible-playbook --extra-vars \"%s\" ./ansible/sites.yml' % vars
 
-    p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-    output = p.stdout.read()
+    ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    output = ansible_proc.communicate()[0]
+
+    # This output is actually the ansible output
+    # should fix this up and have it just return the status
+    # and the tempest log that we xfrd over
     return output

@@ -25,5 +25,6 @@
     host: "{{ devstack_instance['private_ip'] }}"
     timeout: 120
     state: started
+
 - name: pause for 30 seconds
   pause: seconds=30
