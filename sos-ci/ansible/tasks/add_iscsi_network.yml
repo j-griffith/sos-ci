@@ -1,0 +1,10 @@
+- hosts: devstack_instances
+  tasks:
+
+  - name: send over eth1.cfg
+    sudo: yes
+    template: src=../../templates/eth1.cfg dest=/etc/network/interfaces.d/eth1.cfg
+
+  - name: enable eth1
+    sudo: yes
+    shell: ifup eth1
