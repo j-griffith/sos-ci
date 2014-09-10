@@ -14,13 +14,13 @@
 - name: output info
   debug: var=devstack_instance
 
-- name: Add single nic instance to devstack_instances
-  add_host: hostname={{ devstack_instance['private_ip'] }} groupname=devstack_instances
+- name: Add multinic instance to devstack_instances
+  add_host: hostname={{ devstack_instance['info']['addresses']['private'][0]['addr'] }} groupname=devstack_instances
 
-- name: wait for ssh to be ready single nic
+- name: wait for ssh to be ready multinic
   wait_for:
     port: 22
-    host: "{{ devstack_instance['private_ip'] }}"
+    host: "{{ devstack_instance['info']['addresses']['private'][0]['addr'] }}"
     timeout: 120
     state: started
 

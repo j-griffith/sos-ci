@@ -10,7 +10,6 @@ from threading import Thread
 import time
 
 import executor
-import instance
 
 
 # CI related variables
@@ -18,10 +17,7 @@ CI_ACCOUNT = os.environ.get('CI_ACCOUNT_LOGIN', 'sfci')
 CI_KEYFILE = os.environ.get('GERRIT_SSH_KEY', '/home/jgriffith/.ssh/sfci_rsa')
 OS_REVIEW_HOST = os.environ.get('GERRIT_HOST', 'review.openstack.org')
 OS_REVIEW_HOST_PORT = os.environ.get('GERRIT_PORT', 29418)
-IMAGE_ID = os.environ.get('CI_IMAGE_ID', '39abf4bc-29a8-4b84-963f-b1a1890ca6bf')
-FLAVOR = os.environ.get('DEFAULT_FLAVOR', '4')
 PROJECT = os.environ.get('CI_PROJECT', 'cinder')
-KEY_NAME = os.environ.get('DEFAULT_OS_KEYFILE', 'default_key')
 CI_NAME = 'SolidFire-'
 
 event_queue = deque()
@@ -92,9 +88,7 @@ class JobThread(Thread):
                 # Launch instance, run tempest etc etc etc
                 name = ('review-%s' % event['change']['number'])
                 try:
-                    result = executor.just_doit(instance.networks['private'][0],
-                                                KEY_NAME,
-                                                event['patchSet']['ref'])
+                    result = executor.just_doit(event['patchSet']['ref'])
                     print "Results from tempest: %s" % result
                 except InstanceBuildException:
                     pass

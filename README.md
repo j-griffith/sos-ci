@@ -27,6 +27,12 @@ TODO
 -----
 Add the actual Tempest job and log upload bits
 
+Added a multinic option, but can't seem to get the usage of "when: "
+figured out.  So just breaking it out into a seperate task, to use
+multi-nic change the boot_openstack_instance task in sites.yml to
+boot_multinic_openstack_instance.
+
+
 Highlights
 ----------
 Some highlighted points, and maybe answers to some questions.
