@@ -1,8 +1,8 @@
 os_login: admin
 os_password: solidfire
 os_tenant_name: demo
-auth_url: http://172.16.140.240:5000/v2.0
-image_id: 2d41d19d-e3d1-4ca1-8402-a45d9b2d5724
-flavor_id: 200
-key_name: bdr70-default-key
+auth_url: http://172.16.140.246:5000/v2.0
+image_id: 9c53fae8-8f48-4bfe-8b6c-83b9087f14c0
+flavor_id: 100
+key_name: bdr76-default-key
 multinic: false
