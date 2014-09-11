@@ -22,7 +22,12 @@ def just_doit(patchset_ref):
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output = ansible_proc.communicate()[0]
 
+    vars = "source_file=%s" % (ref_name)
+    cmd = '/usr/local/bin/ansible-playbook --extra-vars \"%s\" ./ansible/publish.yml' % vars
     # This output is actually the ansible output
     # should fix this up and have it just return the status
     # and the tempest log that we xfrd over
+    ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    output += ansible_proc.communicate()[0]
+
     return output

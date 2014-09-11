@@ -1,0 +1,21 @@
+- hosts: sfci
+  connection: smart
+  gather_facts: false
+  tasks:
+  - name: Nuke it if it exists
+    shell: rm -rf {{ source_file }}*
+    args:
+      chdir: ~/www/solidfire-ci-logs
+
+  - name: Send files
+    copy: src=../logs/{{ source_file }}.tar.gz dest=~/www/solidfire-ci-logs/
+
+  - name: Unzip bundle
+    shell: gunzip {{ source_file }}.tar.gz
+    args:
+      chdir: ~/www/solidfire-ci-logs
+
+  - name: Untar logs
+    shell: tar -xvf {{ source_file }}.tar
+    args:
+      chdir: ~/www/solidfire-ci-logs/

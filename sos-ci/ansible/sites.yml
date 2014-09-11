@@ -5,6 +5,6 @@
     - include_vars: vars.yml
     - include: tasks/boot_openstack_instance.yml
 
-- include: tasks/install_devstack.yml
+#- include: tasks/install_devstack.yml
 - include: tasks/run_tempest.yml
 - include: tasks/run_cleanup.yml

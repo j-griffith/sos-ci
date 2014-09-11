@@ -1,12 +1,9 @@
 #!/bin/bash
 
 REF_DATA=$1
-cd $REF_DATA
-
-BASE_NAME=`basename $REF_DATA`
-mkdir $BASE_NAME
-mkdir $BASE_NAME/logs
-mkdir $BASE_NAME/logs/etc
+mkdir $REF_DATA
+mkdir $REF_DATA/logs
+mkdir $REF_DATA/logs/etc
 
 PROJECTS="openstack-dev/devstack $PROJECTS"
 PROJECTS="openstack/cinder $PROJECTS"
@@ -35,8 +32,8 @@ PROJECTS="openstack/taskflow $PROJECTS"
 PROJECTS="openstack/tempest $PROJECTS"
 # devstack logs
 cd ~/devstack
-cp local.conf $REF_DATA/logs/local.conf.txt
-cp /tmp/stack.sh.log $REF_DATA/logs/stack.sh.log.txt
+gzip -c local.conf > $REF_DATA/logs/local.conf.txt.gz
+gzip -c /tmp/stack.sh.log > $REF_DATA/logs/stack.sh.log.txt.gz
 
 # Archive config files
 for PROJECT in $PROJECTS; do
@@ -49,7 +46,7 @@ done
 # OS Service Logs
 cd /opt/stack/screen-logs
 for log in `ls -1 /opt/stack/screen-logs | grep "[a-zA-Z].log"`; do
-    cp $log $REF_DATA/logs/$log.txt
+    gzip -c $log > $REF_DATA/logs/$log.txt.gz
 done
 
 # Tempest logs
@@ -58,7 +55,5 @@ cp console.log.out  $REF_DATA/console.log.out
 cp etc/tempest.conf  $REF_DATA/logs/tempest.conf
 
 # Tar it all up
-#cd $REF_DATA
-cd ~
-tar -cvf $BASE_NAME.tar $BASE_NAME
-gzip $BASE_NAME.tar
+cd $REF_DATA
+tar -cvf $REF_DATA.tar $REF_DATA

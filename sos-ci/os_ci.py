@@ -93,6 +93,7 @@ class JobThread(Thread):
                 except InstanceBuildException:
                     pass
 
+                self._upload_results_to_web(event)
                 print "Completed %s-dsvm-full" % CI_NAME
                 print "Events in queue: %s" % len(event_queue)
 
