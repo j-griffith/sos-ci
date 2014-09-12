@@ -19,3 +19,8 @@
     shell: tar -xvf {{ source_file }}.tar
     args:
       chdir: ~/www/solidfire-ci-logs/
+
+  - name: Delete tar file
+    shell: rm {{ source_file }}.tar
+    args:
+      chdir: ~/www/solidfire-ci-logs/

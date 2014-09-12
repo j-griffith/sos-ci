@@ -41,7 +41,7 @@ CINDER_BRANCH=master
 CINDER_ENABLED_BACKENDS=solidfire
 [solidfire]
 volume_driver=cinder.volume.drivers.solidfire.SolidFireDriver
-san_ip=192.168.139.112
+san_ip=192.168.139.122
 san_login=admin
 san_password=admin
 volume_backend_name=solidfire

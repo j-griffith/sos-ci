@@ -5,6 +5,7 @@ import json
 from optparse import OptionParser
 import os
 import paramiko
+import subprocess
 import sys
 from threading import Thread
 import time
@@ -148,6 +149,7 @@ def process_options():
 
 if __name__ == '__main__':
     global event_queue
+    run_cleanup = True
     options = process_options()
 
     for i in xrange(options.number_of_worker_threads):
@@ -162,3 +164,9 @@ if __name__ == '__main__':
                 if not options.event_monitor_only:
                     print "Adding event to queue..."
                     event_queue.append(valid_event)
+                    run_cleanup = True
+        if len(event_queue) == 0 and run_cleanup:
+            cmd = '/usr/local/bin/ansible-playbook ./ansible/cleanup_test_cluster.yml'
+            ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            ansible_proc.communicate()[0]
+            run_cleanup = False
