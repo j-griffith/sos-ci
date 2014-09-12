@@ -51,6 +51,12 @@ for log in `ls -1 /opt/stack/screen-logs | grep "[a-zA-Z].log"`; do
     cp $log /home/ubuntu/$REF_NAME/logs/$log.txt
 done
 
+# Add the commit id
+cd /opt/stack/cinder
+COMMIT = git log --abbrev-commit --pretty=oneline -n1
+COMMIT_ID = var1=$(echo $COMMIT | cut -f1 -d-)
+echo "commit_id: $COMMIT_ID" >> console.log.out
+
 # Tempest logs
 cd /opt/stack/tempest
 cp console.log.out  /home/ubuntu/$REF_NAME/console.log.out

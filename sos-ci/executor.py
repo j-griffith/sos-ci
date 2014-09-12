@@ -30,4 +30,11 @@ def just_doit(patchset_ref):
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output += ansible_proc.communicate()[0]
 
-    return output
+    with open('./logs/%s.console' % ref_name) as file:
+        commit_id = file.readline()
+
+    success = False
+    if 'Failed: 0' in open('./logs/%s.console' % ref_name).read():
+        success = True
+
+    return (success, commit_id, output)
