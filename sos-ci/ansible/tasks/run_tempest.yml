@@ -5,8 +5,13 @@
     sudo: yes
     template: src=../../templates/compute.filters dest=/etc/nova/rootwrap.d/compute.filters
 
-  - name: run tempest
+  - name: get the cinder commit sha
     sudo: no
+    shell: echo cinder_commit_id `git rev-parse --short HEAD` > /opt/stack/tempest/console.log.out
+    args:
+      chdir: /opt/stack/cinder
+
+  - name: run tempest
     sudo: no
     shell: tools/pretty_tox.sh api.volume | tee -a console.log.out
     args:

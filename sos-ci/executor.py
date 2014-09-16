@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 """ EZ-PZ just call our ansible playbook.
@@ -30,11 +31,28 @@ def just_doit(patchset_ref):
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output += ansible_proc.communicate()[0]
 
-    with open('./logs/%s.console' % ref_name) as file:
-        commit_id = file.readline()
-
     success = False
-    if 'Failed: 0' in open('./logs/%s.console' % ref_name).read():
-        success = True
+    hash_id = None
+    console_log = './logs/%s.console' % ref_name
+    if os.path.isfile(console_log):
+        if 'Failed: 0' in open(console_log).read():
+            success = True
 
-    return (success, commit_id, output)
+        # We grab the abbreviated sha from the first line of the
+        # console.out file
+        with open('./logs/%s.console' % ref_name) as f:
+            first_line=f.readline()
+        print "Attempting to parse: %s" % first_line
+        hash_id = first_line.split()[1]
+
+    # Finally, delete the instance regardless of pass/fail
+    # NOTE it's moved out of tasks here otherwise it won't
+    # run if preceeded by a failure
+    vars = "instance_name=%s" % (ref_name)
+    vars += " patchset_ref=%s" % patchset_ref
+    cmd = '/usr/local/bin/ansible-playbook --extra-vars \"%s\" ./ansible/teardown.yml' % vars
+
+    ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    output = ansible_proc.communicate()[0]
+
+    return (hash_id, success, output)

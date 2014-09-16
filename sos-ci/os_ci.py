@@ -47,18 +47,30 @@ class JobThread(Thread):
 
     def _post_results_to_gerrit(self, log_location, passed, commit_id):
         #ssh -p 29418 USERNAME@review.openstack.org gerrit review -m '"Test failed on MegaTestSystem <http://megatestsystem.org/tests/1234>"' --verified=-1 c0ff33
-        # TODO: jdg commit_id I *believe* is the abbreviated commit sha: git log --abbrev-commit --pretty=oneline
-        cmd = ""
-        if passed:
-            cmd = '"Test sfci-dsvm-volume passed on SolidFire CI System %s" --verified=+1 %s' % (log_location, commit_id)
+        cmd = "gerrit review -m "
+        failed = False
+        if commit_id:
+            if passed:
+                #cmd = """'"Test sfci-dsvm-volume passed on SolidFire CI System %s"' --verified +1 %s""" % (log_location, commit_id)
+                cmd = cmd + """'"* solidfire-dsvm-volume %s : SUCCESS "' %s""" % (log_location, commit_id)
+            else:
+                cmd = cmd + """'"* solidfire-dsvm-volume %s : FAILED "' %s""" % (log_location, commit_id)
+                failed = True
         else:
-            cmd = '"Test sfci-dsvm-volume failed on SolidFire CI System %s" --verified=-1 %s' % (log_location, commit_id)
+            commit_id = 'failed'
+            failed = True
+
+        with open('/home/jgriffith/sos_ci_results.dat', 'a') as f:
+            f.write('%s\n' % cmd)
+        #return
+        if failed:
+            return
 
         self.username = CI_ACCOUNT
         self.key_file = CI_KEYFILE
         self.host = OS_REVIEW_HOST
         self.port = OS_REVIEW_HOST_PORT
-        print ('Connecting to gerrit stream with %s@%s:%d '
+        print ('Connecting to gerrit for voting %s@%s:%d '
                'using keyfile %s' % (self.username,
                                      self.host,
                                      self.port,
@@ -75,6 +87,7 @@ class JobThread(Thread):
             print e
             sys.exit(1)
 
+        print ('Issue vote: %s' % cmd)
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
 
@@ -95,18 +108,26 @@ class JobThread(Thread):
 
                 # Launch instance, run tempest etc etc etc
                 name = ('review-%s' % event['change']['number'])
+                patchset_ref = event['patchSet']['ref']
                 try:
-                    success, result = executor.just_doit(event['patchSet']['ref'])
-                    print "Results from tempest test: %s, %s" % (success, result)
+                    commit_id, success, output = \
+                        executor.just_doit(event['patchSet']['ref'])
+
                 except InstanceBuildException:
                     pass
 
                 print "Completed %s-dsvm-full" % CI_NAME
+                url_name = patchset_ref.replace('/', '-')
+                log_location = 'http://54.164.167.86/solidfire-ci-logs/%s' % url_name
+                self._post_results_to_gerrit(log_location, success, commit_id)
                 #print "Events in queue: %s" % len(event_queue)
                 #self._post_results_to_gerrit('http://54.164.167.86/solidfire-ci-logs/%s' % 'foo',
                 #                             success,
                 #                             commit_id)
-                pipeline.remove(valid_event)
+                try:
+                    pipeline.remove(valid_event)
+                except ValueError:
+                    pass
 
                 # So if there's nothing in event_queue and nothing in progress
                 # should be a great time to delete and purge everything on the

@@ -18,15 +18,3 @@
   - name: fetch logs
     sudo: yes
     fetch: src=/home/ubuntu/{{ instance_name }}.tar.gz dest=../../logs/ flat=yes validate_md5=no
-
-- hosts: localhost
-  connection: local
-  tasks:
-  - name: Shut down instance
-    nova_compute:
-      state: absent
-      login_username: "{{ os_login }}"
-      login_password: "{{ os_password }}"
-      login_tenant_name: "{{ os_tenant_name }}"
-      auth_url: "{{ auth_url }}"
-      name: "{{ instance_name }}"

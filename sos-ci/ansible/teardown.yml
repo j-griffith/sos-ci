@@ -1,0 +1,11 @@
+- hosts: localhost
+  connection: local
+  tasks:
+  - name: Shut down instance
+    nova_compute:
+      state: absent
+      login_username: "{{ os_login }}"
+      login_password: "{{ os_password }}"
+      login_tenant_name: "{{ os_tenant_name }}"
+      auth_url: "{{ auth_url }}"
+      name: "{{ instance_name }}"
