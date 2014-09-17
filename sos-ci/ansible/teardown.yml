@@ -1,6 +1,7 @@
 - hosts: localhost
   connection: local
   tasks:
+  - include_vars: vars.yml
   - name: Shut down instance
     nova_compute:
       state: absent

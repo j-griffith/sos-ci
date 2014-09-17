@@ -52,9 +52,9 @@ class JobThread(Thread):
         if commit_id:
             if passed:
                 #cmd = """'"Test sfci-dsvm-volume passed on SolidFire CI System %s"' --verified +1 %s""" % (log_location, commit_id)
-                cmd = cmd + """'"* solidfire-dsvm-volume %s : SUCCESS "' %s""" % (log_location, commit_id)
+                cmd += """"* solidfire-dsvm-volume %s : SUCCESS " %s""" % (log_location, commit_id)
             else:
-                cmd = cmd + """'"* solidfire-dsvm-volume %s : FAILED "' %s""" % (log_location, commit_id)
+                cmd += """"* solidfire-dsvm-volume %s : FAILED " %s""" % (log_location, commit_id)
                 failed = True
         else:
             commit_id = 'failed'
