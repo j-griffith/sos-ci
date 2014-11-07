@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from collections import deque
+import datetime
 import json
 from optparse import OptionParser
 import os
@@ -31,12 +32,15 @@ class InstanceBuildException(Exception):
 
 def _filter_cinder_events(event):
 
+    with open('/home/jgriffith/sos_ci_events.dat', 'a') as f:
+        f.write('%s\n' % event)
+
     if (event.get('type', 'nill') == 'comment-added' and
         'Verified+1' in event['comment'] and
         PROJECT in event['change']['project']):
         if event['author']['username'] == 'jenkins':
-            print ('Adding review id %s to job queue...' %
-                   event['change']['number'])
+            print ('%s: Adding review id %s to job queue...' %
+                   (datetime.datetime.now(), event['change']['number']))
             return event
     else:
         return None
@@ -96,7 +100,7 @@ class JobThread(Thread):
         while True:
             if not event_queue:
                 time.sleep(60)
-                print "loop...debug"
+                print "%s: Waiting for event..." % datetime.datetime.now()
             else:
                 event = event_queue.popleft()
 
@@ -116,7 +120,7 @@ class JobThread(Thread):
                 except InstanceBuildException:
                     pass
 
-                print "Completed %s-dsvm-full" % CI_NAME
+                print "%s: Completed %s-dsvm-full" % (CI_NAME, datetime.datetime.now())
                 url_name = patchset_ref.replace('/', '-')
                 log_location = 'http://54.164.167.86/solidfire-ci-logs/%s' % url_name
                 self._post_results_to_gerrit(log_location, success, commit_id)
@@ -132,10 +136,11 @@ class JobThread(Thread):
                 # So if there's nothing in event_queue and nothing in progress
                 # should be a great time to delete and purge everything on the
                 # backend device
-                if len(event_queue) == 0 and len(pipeline) == 0:
-                    cmd = '/usr/local/bin/ansible-playbook ./ansible/cleanup_test_cluster.yml'
-                    ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                    ansible_proc.communicate()[0]
+
+                #if len(event_queue) == 0 and len(pipeline) == 0:
+                cmd = '/usr/local/bin/ansible-playbook ./ansible/cleanup_test_cluster.yml'
+                ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                ansible_proc.communicate()[0]
 
 
 class GerritEventStream(object):
@@ -178,7 +183,7 @@ def process_options():
 
     parser.add_option('-n', '--num-threads', action='store',
                       type='int',
-                      default=2,
+                      default=1,
                       dest='number_of_worker_threads',
                       help='Number of job threads to run (default = 2).')
     parser.add_option('-m', action='store_true',
@@ -201,5 +206,5 @@ if __name__ == '__main__':
             valid_event = _filter_cinder_events(event)
             if valid_event:
                 if not options.event_monitor_only:
-                    print "Adding event to queue..."
+                    print "%s: Adding event to queue..." % datetime.datetime.now()
                     event_queue.append(valid_event)

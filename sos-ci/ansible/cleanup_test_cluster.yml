@@ -3,17 +3,17 @@
   gather_facts: false
   tasks:
   - name: Delete all volumes
-    shell: ./delete_volumes.py -m 192.168.139.122 -u admin -p admin --volume_regex=UUID-*
+    shell: ./delete_volumes.py -m 192.168.139.112 -u admin -p admin --volume_regex=UUID-*
     args:
-      chdir: ~/cft
+      chdir: /home/jgriffith/cft
 
   - name: Purge volumes
-    shell: ./purge_deleted_volumes.py -m  192.168.139.122 -u admin -p admin
+    shell: ./purge_deleted_volumes.py -m  192.168.139.112 -u admin -p admin
     args:
-      chdir: ~/cft
+      chdir: /home/jgriffith/cft
 
   - name: Delete accounts
-    shell: ./delete_accounts.py -C 122.json
+    shell: ./delete_accounts.py -C 112.json
     args:
-      chdir: ~/sf-scripts
+      chdir: /home/jgriffith/sf-scripts
 
