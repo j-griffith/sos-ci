@@ -52,7 +52,6 @@ class InstanceBuildException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
-
 def _filter_cinder_events(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
