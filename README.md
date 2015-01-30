@@ -11,10 +11,23 @@ Current requirements and assumptions.
 
 - You have to have an OpenStack Third Party CI account to monitor the Gerrit Stream
 - All of this work thus far assumes running on an OpenStack Cloud
+- Update/Modify sos_ci/ansible/vars.yml for your OpenStack creds
+- If you want to do multi-nic (ie: seperate network for iSCSI, use multi-nic options)
+- In order to use the mail notification option, install:
+  * postfix
+  * sendmail
 
 
 Current Status
 --------------
+Update Dec 22, 2014
+* Been running this for a few months now, pretty reliably
+* Only issues I've encountered are cleanup issues from Tempest
+  after busy weeks I can get to a point where I have over 5K accounts
+  and several thousand volumes, rather than messing with trying to detect
+  the state in ansible and cleanup during idle period, I just wrote a
+  cron job to do this for me each day.
+
 Still very much a work in progress.  Where it stands as of Aug 25, 17:50 UTC
 * Source your OpenStack creds file
 * Make sure default image-id, flavor, key-name etc are good, or specify in a creds file (to be added)
@@ -25,13 +38,13 @@ Still very much a work in progress.  Where it stands as of Aug 25, 17:50 UTC
 
 TODO
 -----
-Add the actual Tempest job and log upload bits
+Now that it works reliably, at some point I'll factor out the Ansible
+pieces into their own repo and make it a sub-repo of sos-ci.
 
-Added a multinic option, but can't seem to get the usage of "when: "
-figured out.  So just breaking it out into a seperate task, to use
-multi-nic change the boot_openstack_instance task in sites.yml to
-boot_multinic_openstack_instance.
-
+Also there's a ton of low hanging fruit here in terms of optimizations and
+cleanup, but the whole point of this effort was to setup a CI automation system
+with little overhead and a fire and forget type of reliability... that's done so
+I may or may not come back to it.
 
 Highlights
 ----------

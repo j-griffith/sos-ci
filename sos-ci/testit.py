@@ -11,5 +11,4 @@ import executor
 patchset = str(sys.argv[1])
 print "Testing patchset: %s" % patchset
 success, results = executor.just_doit(patchset)
-import pdb;pdb.set_trace()
 print "We'll ned to parse these out....\n%s" % results
