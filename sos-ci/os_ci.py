@@ -160,6 +160,7 @@ class JobThread(Thread):
                 # Launch instance, run tempest etc etc etc
                 patchset_ref = event['patchSet']['ref']
                 revision = event['patchSet']['revision']
+                logging.debug('Grabbed revision from event: %s', revision)
 
                 try:
                     commit_id, success, output = \
@@ -174,7 +175,7 @@ class JobThread(Thread):
                     logger.error('Received InstanceBuildException...')
                     pass
 
-                if not commit_id:
+                if commit_id is None:
                     commit_id = revision
 
                 logger.info("Completed %s-dsvm-full", CI_NAME)
