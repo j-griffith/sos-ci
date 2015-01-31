@@ -1,0 +1,19 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+  - name: Delete all volumes
+    shell: ./delete_volumes.py -m 192.168.139.100 -u admin -p admin --volume_regex=UUID-*
+    args:
+      chdir: ~/cft
+
+  - name: Purge volumes
+    shell: ./purge_deleted_volumes.py -m  192.168.139.100 -u admin -p admin
+    args:
+      chdir: ~/cft
+
+  - name: Delete accounts
+    shell: ./delete_accounts.py -C 100.json
+    args:
+      chdir: ~/sf-scripts
+
