@@ -2,4 +2,5 @@
 *.swp
 *.swo
 *.pyc
-./sos-ci/logs/*
+*.log
+./data

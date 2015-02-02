@@ -3,8 +3,6 @@
 from email.mime.text import MIMEText
 from collections import deque
 import json
-import logging
-import logging.handlers
 from optparse import OptionParser
 import os
 import paramiko
@@ -14,21 +12,7 @@ from threading import Thread
 import time
 
 import executor
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] "
-                                 "[%(levelname)-5.5s]  %(message)s")
-
-file_handler =\
-    logging.handlers.RotatingFileHandler('/home/jgriffith/sos-ci.log',
-                                         maxBytes=1048576,
-                                         backupCount=2,)
-logger.addHandler(file_handler)
-
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logFormatter)
-logger.addHandler(console_handler)
+import log
 
 
 # CI Account  related variables
@@ -44,6 +28,11 @@ ENABLE_EMAIL_NOTIFICATIONS = True
 FROM_EMAIL_ADDRESS = "sfci@bdr76.solidfire.com"
 TO_EMAIL_ADDRESS = "john.griffith@solidfire.com"
 
+# Misc settings
+DATA_DIR =\
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data'
+
+logger = log.setup_logger('sos-ci', DATA_DIR + '/logs')
 event_queue = deque()
 pipeline = deque()
 
@@ -57,8 +46,10 @@ def _filter_cinder_events(event):
             'Verified+1' in event['comment'] and
             PROJECT in event['change']['project']):
         if event['author']['username'] == 'jenkins':
-            logging.info('Adding review id %s to job queue...' %
+            logger.info('Adding review id %s to job queue...' %
                          event['change']['number'])
+            with open(DATA_DIR + '/valid-event.log', 'a') as f:
+                json.dump(event, f)
             return event
     else:
         return None
@@ -97,7 +88,7 @@ class JobThread(Thread):
                    (log_location, commit_id)
             logger.debug("Created success cmd: %s", cmd)
         else:
-            subject += " sf-dsvm FAILED"
+            subject += " TEST sf-dsvm FAILED"
             msg += "Result: FAILED"
             cmd += """"* solidfire-dsvm-volume %s : FAILED " %s""" % \
                    (log_location, commit_id)
@@ -124,6 +115,7 @@ class JobThread(Thread):
                       'port': self.port,
                       'key_file': self.key_file})
 
+        """
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
@@ -138,17 +130,18 @@ class JobThread(Thread):
         logger.info('Issue vote: %s', cmd)
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
+        """
 
     def run(self):
         while True:
             event_queue
             if not event_queue:
-                logging.debug('queue is empty, sleep for 60 '
+                logger.debug('queue is empty, sleep for 60 '
                               'seconds and check again...')
                 time.sleep(60)
             else:
                 event = event_queue.popleft()
-                logging.debug("Processing event from queue:\n%s", event)
+                logger.debug("Processing event from queue:\n%s", event)
 
                 # Add a goofy pipeline queue so we know
                 # not only when nothing is in the queue
@@ -159,7 +152,7 @@ class JobThread(Thread):
                 # Launch instance, run tempest etc etc etc
                 patchset_ref = event['patchSet']['ref']
                 revision = event['patchSet']['revision']
-                logging.debug('Grabbed revision from event: %s', revision)
+                logger.debug('Grabbed revision from event: %s', revision)
 
                 try:
                     commit_id, success, output = \
@@ -253,8 +246,8 @@ if __name__ == '__main__':
             try:
                 event = json.loads(event)
             except Exception as ex:
-                logging.error('Failed json.loads on event: %s', event)
-                logging.exception(ex)
+                logger.error('Failed json.loads on event: %s', event)
+                logger.exception(ex)
                 break
             valid_event = _filter_cinder_events(event)
             if valid_event:
