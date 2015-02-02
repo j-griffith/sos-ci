@@ -1,10 +1,6 @@
 - hosts: devstack_instances
   tasks:
 
-  - name: send over rootwrap
-    sudo: yes
-    template: src=../../templates/compute.filters dest=/etc/nova/rootwrap.d/compute.filters
-
   - name: get the cinder commit sha
     sudo: no
     shell: echo cinder_commit_id `git rev-parse --short HEAD` > /opt/stack/tempest/console.log.out
