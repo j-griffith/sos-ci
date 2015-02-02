@@ -23,7 +23,13 @@
 
   - name: modify cinder_branch
     lineinfile: dest=/home/ubuntu/devstack/local.conf regexp=^CINDER_BRANCH= line=CINDER_BRANCH={{ patchset_ref }}
+    register: git_sha
+
+  - debug: var=git_sha
 
   - name: run stack.sh
     sudo: no
     shell: ~/devstack/stack.sh 2>&1 > /tmp/stack.sh.log
+    register: stacksh_result
+
+  - debug: var=stacksh_result
