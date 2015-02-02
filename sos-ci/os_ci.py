@@ -88,9 +88,9 @@ class JobThread(Thread):
                    (log_location, commit_id)
             logger.debug("Created success cmd: %s", cmd)
         else:
-            subject += " TEST sf-dsvm FAILED"
+            subject += " sf-dsvm FAILED"
             msg += "Result: FAILED"
-            cmd += """"* solidfire-dsvm-volume %s : FAILED " %s""" % \
+            cmd += """"* solidfire-dsvm-volume %s : FAILURE " %s""" % \
                    (log_location, commit_id)
             logger.debug("Created failed cmd: %s", cmd)
 

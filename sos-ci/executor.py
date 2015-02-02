@@ -4,7 +4,6 @@ import subprocess
 import log
 
 
-logger = log.setup_logger('sos-ci', '/home/jgriffith/sos-ci/data/logs')
 
 """ EZ-PZ just call our ansible playbook.
 
@@ -17,6 +16,7 @@ def just_doit(patchset_ref):
     """ Do the dirty work, or let ansible do it. """
 
     ref_name = patchset_ref.replace('/', '-')
+    logger = log.setup_logger(ref_name, '/home/jgriffith/sos-ci/data/logs')
     logger.debug('Attempting ansible tasks on ref-name: %s', ref_name)
     vars = "instance_name=%s" % (ref_name)
     vars += " patchset_ref=%s" % patchset_ref
@@ -27,6 +27,11 @@ def just_doit(patchset_ref):
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output = ansible_proc.communicate()[0]
     logger.debug('Response from ansible: %s', output)
+
+    # FIXME(jdg): Currently if the build task (or tasks) fail
+    # we don't publish anything, add some logic here to
+    # upload the ansible logs to the web server so one can
+    # view the reason why something fails
 
     vars = "source_file=%s" % (ref_name)
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\

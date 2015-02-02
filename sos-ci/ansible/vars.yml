@@ -1,5 +1,5 @@
 os_login: admin
-os_password: **#!@#$%^^&&*
+os_password: solidfire
 os_tenant_name: demo
 auth_url: http://172.16.140.246:5000/v2.0
 image_id: 5203b96c-94a9-4dce-a7a6-e960ea87e8df
