@@ -3,7 +3,11 @@ import subprocess
 
 import log
 
+from iniparse import INIConfig
 
+fdir = os.path.dirname(os.path.realpath(__file__))
+conf_dir = os.path.dirname(fdir)
+cfg = INIConfig(open(conf_dir + '/sos-ci.conf'))
 
 """ EZ-PZ just call our ansible playbook.
 
@@ -21,7 +25,7 @@ def just_doit(patchset_ref):
     vars = "instance_name=%s" % (ref_name)
     vars += " patchset_ref=%s" % patchset_ref
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\
-          '\"%s\" ./ansible/run_ci.yml' % vars
+          '\"%s\" %s/run_ci.yml' % (vars, cfg.Ansible.ansible_dir)
 
     logger.debug('Running ansible run_ci command: %s', cmd)
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -35,7 +39,7 @@ def just_doit(patchset_ref):
 
     vars = "source_file=%s" % (ref_name)
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\
-          '\"%s\" ./ansible/publish.yml' % vars
+          '\"%s\" %s/publish.yml' %  (vars, cfg.Ansible.ansible_dir)
     logger.debug('Running ansible publish command: %s', cmd)
 
     # This output is actually the ansible output
@@ -69,7 +73,7 @@ def just_doit(patchset_ref):
     vars = "instance_name=%s" % (ref_name)
     vars += " patchset_ref=%s" % patchset_ref
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\
-          '\"%s\" ./ansible/teardown.yml' % vars
+          '\"%s\" %s/teardown.yml' %  (vars, cfg.Ansible.ansible_dir)
 
     logger.debug('Running ansible teardown command: %s', cmd)
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)

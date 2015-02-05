@@ -1,0 +1,22 @@
+[AccountInfo]
+gerrit_ssh_key = /home/jgriffith/.ssh/sfci_rsa
+gerrit_host = review.openstack.org
+gerrit_port = 29418
+project_name = cinder
+ci_name = SolidFire-dsvm-full
+ci_account = sfci
+
+[Ansible]
+ansible_dir = /home/jgriffith/sos_ci/sos_ci/ansible
+
+[Data]
+debug = True
+data_dir = /home/jgriffith/sos-ci/data
+log_dir = /home/jgriffith/sos-ci/data/sos-logs
+
+[Email]
+enable_notifications = true
+from_address = sfci@bdr76.solidfire.com
+to_address = john.griffith@solidfire.com
+
+

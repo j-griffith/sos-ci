@@ -10,5 +10,7 @@ import executor
 #patchset = 'master'
 patchset = str(sys.argv[1])
 print "Testing patchset: %s" % patchset
-success, results = executor.just_doit(patchset)
-print "We'll ned to parse these out....\n%s" % results
+(hash_id, success, results) = executor.just_doit(patchset)
+print "hash_id:%s", hash_id
+print "success:%s", success
+print "result:%s", results

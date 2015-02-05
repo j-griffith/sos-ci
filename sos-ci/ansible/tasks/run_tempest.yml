@@ -6,6 +6,7 @@
     shell: echo cinder_commit_id `git rev-parse --short HEAD` > /opt/stack/tempest/console.log.out
     args:
       chdir: /opt/stack/cinder
+    ignore_errors: True
 
   - name: run tempest
     sudo: no

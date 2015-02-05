@@ -11,26 +11,20 @@ import sys
 from threading import Thread
 import time
 
+from iniparse import INIConfig
+
 import executor
 import log
 
-
-# CI Account  related variables
-CI_ACCOUNT = os.environ.get('CI_ACCOUNT_LOGIN', 'sfci')
-CI_KEYFILE = os.environ.get('GERRIT_SSH_KEY', '/home/jgriffith/.ssh/sfci_rsa')
-OS_REVIEW_HOST = os.environ.get('GERRIT_HOST', 'review.openstack.org')
-OS_REVIEW_HOST_PORT = os.environ.get('GERRIT_PORT', 29418)
-PROJECT = os.environ.get('CI_PROJECT', 'cinder')
-CI_NAME = 'SolidFire-'
-
-# Email Notifications
-ENABLE_EMAIL_NOTIFICATIONS = True
-FROM_EMAIL_ADDRESS = "sfci@bdr76.solidfire.com"
-TO_EMAIL_ADDRESS = "john.griffith@solidfire.com"
+fdir = os.path.dirname(os.path.realpath(__file__))
+conf_dir = os.path.dirname(fdir)
+cfg = INIConfig(open(conf_dir + '/sos-ci.conf'))
 
 # Misc settings
 DATA_DIR =\
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data'
+if cfg.Data.data_dir:
+    DATA_DIR = cfg.Data.data_dir
 
 logger = log.setup_logger('sos-ci', DATA_DIR + '/logs')
 event_queue = deque()
@@ -44,7 +38,7 @@ class InstanceBuildException(Exception):
 def _filter_cinder_events(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
-            PROJECT in event['change']['project']):
+            cfg.AccountInfo.project_name in event['change']['project']):
         if event['author']['username'] == 'jenkins':
             logger.info('Adding review id %s to job queue...' %
                          event['change']['number'])
@@ -56,10 +50,10 @@ def _filter_cinder_events(event):
 
 
 def _send_notification_email(subject, msg):
-    if ENABLE_EMAIL_NOTIFICATIONS:
+    if cfg.Email.enable_notifications:
         msg = MIMEText(msg)
-        msg["From"] = FROM_EMAIL_ADDRESS
-        msg["To"] = TO_EMAIL_ADDRESS
+        msg["From"] = cfg.Email.from_address
+        msg["To"] = cfg.Email.to_address
         msg["Subject"] = subject
         p = subprocess.Popen(["/usr/sbin/sendmail", "-t"],
                              stdin=subprocess.PIPE)
@@ -103,26 +97,22 @@ class JobThread(Thread):
         with open('/home/jgriffith/sos_ci_results.dat', 'a') as f:
             f.write('%s\n' % cmd)
 
-        self.username = CI_ACCOUNT
-        self.key_file = CI_KEYFILE
-        self.host = OS_REVIEW_HOST
-        self.port = OS_REVIEW_HOST_PORT
         logger.debug('Connecting to gerrit for voting '
                      '%(user)s@%(host)s:%(port)d '
                      'using keyfile %(key_file)s',
-                     {'user': self.username,
-                      'host': self.host,
-                      'port': self.port,
-                      'key_file': self.key_file})
+                     {'user': cfg.AccountInfo.ci_account,
+                      'host': cfg.AccountInfo.gerrit_host,
+                      'port': int(cfg.AccountInfo.gerrit_port),
+                      'key_file': cfg.AccountInfo.gerrit_ssh_key})
 
         """
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.ssh.connect(self.host,
-                             self.port,
-                             self.username,
-                             key_filename=self.key_file)
+            self.ssh.connect(cfg.AccountInfo.gerrit_host,
+                             int(cfg.AccountInfo.gerrit_port),
+                             cfg.AccountInfo.ci_account,
+                             key_filename=cfg.AccountInfo.gerrit_ssh_key)
         except paramiko.SSHException as e:
             logger.error('%s', e)
             sys.exit(1)
@@ -170,7 +160,7 @@ class JobThread(Thread):
                 if commit_id is None:
                     commit_id = revision
 
-                logger.info("Completed %s-dsvm-full", CI_NAME)
+                logger.info("Completed %s", cfg.AccountInfo.ci_name)
                 url_name = patchset_ref.replace('/', '-')
                 log_location = ('http://54.164.167.86/solidfire-ci-logs/%s' %
                                 url_name)
@@ -184,25 +174,21 @@ class JobThread(Thread):
 class GerritEventStream(object):
     def __init__(self, *args, **kwargs):
 
-        self.username = CI_ACCOUNT
-        self.key_file = CI_KEYFILE
-        self.host = OS_REVIEW_HOST
-        self.port = OS_REVIEW_HOST_PORT
         logger.debug('Connecting to gerrit stream with '
                      '%(user)s@%(host)s:%(port)d '
                      'using keyfile %(key_file)s',
-                     {'user': self.username,
-                      'host': self.host,
-                      'port': self.port,
-                      'key_file': self.key_file})
+                     {'user': cfg.AccountInfo.ci_account,
+                      'host': cfg.AccountInfo.gerrit_host,
+                      'port': int(cfg.AccountInfo.gerrit_port),
+                      'key_file': cfg.AccountInfo.gerrit_ssh_key})
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.ssh.connect(self.host,
-                             self.port,
-                             self.username,
-                             key_filename=self.key_file)
+            self.ssh.connect(cfg.AccountInfo.gerrit_host,
+                             int(cfg.AccountInfo.gerrit_port),
+                             cfg.AccountInfo.ci_account,
+                             key_filename=cfg.AccountInfo.gerrit_ssh_key)
         except paramiko.SSHException as e:
             logger.error('%s', e)
             sys.exit(1)

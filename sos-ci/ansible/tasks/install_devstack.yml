@@ -8,11 +8,6 @@
       - git
       - vim
 
-  - name: verify git and vim
-    sudo: yes
-    apt: pkg=git state=present
-    apt: pkg=vim state=present
-
   - name: clone devstack
     sudo: no
     git: repo=https://github.com/openstack-dev/devstack dest=~/devstack
@@ -25,11 +20,9 @@
     lineinfile: dest=/home/ubuntu/devstack/local.conf regexp=^CINDER_BRANCH= line=CINDER_BRANCH={{ patchset_ref }}
     register: git_sha
 
-  - debug: var=git_sha
-
   - name: run stack.sh
     sudo: no
-    shell: ~/devstack/stack.sh 2>&1 > /tmp/stack.sh.log
+    shell: ./stack.sh 2>&1 > /tmp/stack.sh.log
     register: stacksh_result
-
-  - debug: var=stacksh_result
+    args:
+      chdir: /home/ubuntu/devstack
