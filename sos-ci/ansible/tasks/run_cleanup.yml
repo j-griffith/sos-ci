@@ -13,8 +13,8 @@
 
   - name: fetch tempest_results
     sudo: yes
-    fetch: src=/opt/stack/tempest/console.log.out dest=../../logs/{{ instance_name }}.console flat=yes validate_md5=no
+    fetch: src=/opt/stack/tempest/console.log.out dest={{ results_dir }}/{{ instance_name }}/console.log.out flat=yes validate_md5=no
 
   - name: fetch logs
     sudo: yes
-    fetch: src=/home/ubuntu/{{ instance_name }}.tar.gz dest=../../logs/ flat=yes validate_md5=no
+    fetch: src=/home/ubuntu/{{instance_name}}/{{ instance_name }}.tar.gz dest={{ results_dir }}/ flat=yes validate_md5=no

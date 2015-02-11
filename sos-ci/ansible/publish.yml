@@ -3,24 +3,28 @@
   gather_facts: false
   tasks:
   - name: Nuke it if it exists
-    shell: rm -rf {{ source_file }}*
+    shell: rm -rf {{ ref_name }}*
     args:
       chdir: ~/www/solidfire-ci-logs
 
-  - name: Send files
-    copy: src=../logs/{{ source_file }}.tar.gz dest=~/www/solidfire-ci-logs/
+  - name: Create ref directory on web server
+    shell: mkdir ~/www/solidfire-ci-logs/{{ ref_name }}
 
-  - name: Unzip bundle
-    shell: gunzip {{ source_file }}.tar.gz
-    args:
-      chdir: ~/www/solidfire-ci-logs
+  - name: Copy backup of console file
+    copy: src={{ results_dir }}/console.log.out dest=~/www/solidfire-ci-logs/{{ ref_name }}/console.log.out
+    ignore_errors: yes
 
-  - name: Untar logs
-    shell: tar -xvf {{ source_file }}.tar
-    args:
-      chdir: ~/www/solidfire-ci-logs/
+  - name: Copy files to web server
+    copy: src={{ results_dir }}/{{ item }} dest=~/www/solidfire-ci-logs/{{ ref_name }}
+    ignore_errors: yes
+    with_items:
+      - ansible.out
+      - stack.sh.log.out
+      - "{{ ref_name }}.tar.gz"
 
-  - name: Delete tar file
-    shell: rm {{ source_file }}.tar
+  - name: Untar log files on web
+    shell: tar -xzf {{ ref_name }}.tar.gz
+    ignore_errors: yes
     args:
-      chdir: ~/www/solidfire-ci-logs/
+      chdir: ~/www/solidfire-ci-logs/{{ ref_name }}
+

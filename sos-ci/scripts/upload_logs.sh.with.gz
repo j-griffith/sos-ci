@@ -33,7 +33,7 @@ PROJECTS="openstack/tempest $PROJECTS"
 # devstack logs
 cd ~/devstack
 gzip -c local.conf > $REF_DATA/logs/local.conf.txt.gz
-gzip -c /tmp/stack.sh.log > $REF_DATA/logs/stack.sh.log.txt.gz
+gzip -c /tmp/stack.sh.log.out > $REF_DATA/logs/stack.sh.log.out.txt.gz
 
 # Archive config files
 for PROJECT in $PROJECTS; do

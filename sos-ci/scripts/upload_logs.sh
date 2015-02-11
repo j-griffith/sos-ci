@@ -35,7 +35,7 @@ PROJECTS="openstack/tempest $PROJECTS"
 # devstack logs
 cd ~/devstack
 cp local.conf /home/ubuntu/$REF_NAME/logs/local.conf.txt
-cp /tmp/stack.sh.log /home/ubuntu/$REF_NAME/logs/stack.sh.log.txt
+cp /tmp/stack.sh.log.out /home/ubuntu/$REF_NAME/logs/stack.sh.log.out.txt
 
 # Archive config files
 for PROJECT in $PROJECTS; do
@@ -64,6 +64,6 @@ cp etc/tempest.conf  /home/ubuntu/$REF_NAME/logs/tempest.conf
 
 # Tar it all up
 #cd $REF_NAME
-cd /home/ubuntu
-tar -cvf $REF_NAME.tar $REF_NAME
+cd /home/ubuntu/$REF_NAME
+tar -cvf $REF_NAME.tar ./*
 gzip $REF_NAME.tar

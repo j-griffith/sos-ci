@@ -26,7 +26,7 @@ DATA_DIR =\
 if cfg.Data.data_dir:
     DATA_DIR = cfg.Data.data_dir
 
-logger = log.setup_logger('sos-ci', DATA_DIR + '/logs')
+logger = log.setup_logger(DATA_DIR + '/os-ci.log')
 event_queue = deque()
 pipeline = deque()
 
@@ -38,7 +38,7 @@ class InstanceBuildException(Exception):
 def _filter_cinder_events(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
-            cfg.AccountInfo.project_name in event['change']['project']):
+            cfg.AccountInfo.project_name == event['change']['project']):
         if event['author']['username'] == 'jenkins':
             logger.info('Adding review id %s to job queue...' %
                          event['change']['number'])
@@ -105,7 +105,6 @@ class JobThread(Thread):
                       'port': int(cfg.AccountInfo.gerrit_port),
                       'key_file': cfg.AccountInfo.gerrit_ssh_key})
 
-        """
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
@@ -120,7 +119,6 @@ class JobThread(Thread):
         logger.info('Issue vote: %s', cmd)
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
-        """
 
     def run(self):
         while True:
@@ -144,9 +142,13 @@ class JobThread(Thread):
                 revision = event['patchSet']['revision']
                 logger.debug('Grabbed revision from event: %s', revision)
 
+                ref_name = patchset_ref.replace('/', '-')
+                results_dir = DATA_DIR + '/' + ref_name
+                os.mkdir(results_dir)
+
                 try:
                     commit_id, success, output = \
-                        executor.just_doit(event['patchSet']['ref'])
+                        executor.just_doit(event['patchSet']['ref'], results_dir)
                     logger.info('Completed just_doit: %(commit)s, '
                                 '%(success)s, %(output)s',
                                 {'commit': commit_id,
