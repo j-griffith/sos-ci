@@ -35,13 +35,14 @@ class InstanceBuildException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+
 def _filter_cinder_events(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
             cfg.AccountInfo.project_name == event['change']['project']):
         if event['author']['username'] == 'jenkins':
             logger.info('Adding review id %s to job queue...' %
-                         event['change']['number'])
+                        event['change']['number'])
             with open(DATA_DIR + '/valid-event.log', 'a') as f:
                 json.dump(event, f)
             return event
@@ -94,7 +95,7 @@ class JobThread(Thread):
                      {'subject': subject, 'msg': msg})
 
         _send_notification_email(subject, msg)
-        with open('/home/jgriffith/sos_ci_results.dat', 'a') as f:
+        with open('~/sos_ci_results.dat', 'a') as f:
             f.write('%s\n' % cmd)
 
         logger.debug('Connecting to gerrit for voting '
@@ -125,7 +126,7 @@ class JobThread(Thread):
             event_queue
             if not event_queue:
                 logger.debug('queue is empty, sleep for 60 '
-                              'seconds and check again...')
+                             'seconds and check again...')
                 time.sleep(60)
             else:
                 event = event_queue.popleft()
@@ -148,7 +149,8 @@ class JobThread(Thread):
 
                 try:
                     commit_id, success, output = \
-                        executor.just_doit(event['patchSet']['ref'], results_dir)
+                        executor.just_doit(event['patchSet']['ref'],
+                                           results_dir)
                     logger.info('Completed just_doit: %(commit)s, '
                                 '%(success)s, %(output)s',
                                 {'commit': commit_id,
