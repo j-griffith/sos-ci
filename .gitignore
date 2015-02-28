@@ -4,5 +4,5 @@
 *.pyc
 *.log
 *.conf
-./data
+./data/*
 ./sos-ci/logs/*
