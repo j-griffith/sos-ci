@@ -2,7 +2,7 @@ os_login: admin
 os_password: solidfire
 os_tenant_name: demo
 auth_url: http://172.16.140.246:5000/v2.0
-image_id: 5203b96c-94a9-4dce-a7a6-e960ea87e8df
+image_id: 62238bf1-62a0-4151-8c09-1adea61e5a9c
 flavor_id: 101
 key_name: cloudkey
 multinic: false

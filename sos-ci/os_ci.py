@@ -13,6 +13,8 @@ import time
 
 from iniparse import INIConfig
 
+from db.model.db_engine import reviews
+from db.model.db_engine import revisions
 import executor
 import log
 
@@ -43,8 +45,13 @@ def _filter_cinder_events(event):
         if event['author']['username'] == 'jenkins':
             logger.info('Adding review id %s to job queue...' %
                         event['change']['number'])
+
+            # One log to act as a data store, and another just to look at
             with open(DATA_DIR + '/valid-event.log', 'a') as f:
                 json.dump(event, f)
+                f.write('\n')
+            with open(DATA_DIR + '/pretty-event.log', 'a') as f:
+                json.dump(event, f, indent=2)
             return event
     else:
         return None
@@ -95,7 +102,7 @@ class JobThread(Thread):
                      {'subject': subject, 'msg': msg})
 
         _send_notification_email(subject, msg)
-        with open('~/sos_ci_results.dat', 'a') as f:
+        with open('/home/jgriffith/sos_ci_results.dat', 'a') as f:
             f.write('%s\n' % cmd)
 
         logger.debug('Connecting to gerrit for voting '
@@ -120,6 +127,22 @@ class JobThread(Thread):
         logger.info('Issue vote: %s', cmd)
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
+
+    def _post_results_to_db(event, log_location, passed, commit_id):
+        """ Post our CI system results to DB. """
+
+        patchset_ref = event['patchSet']['ref']
+
+        try:
+            q = revisions.update(
+                    sos_success=passed,
+                    log_location=log_location).where(
+                        patchset_ref == patchset_ref)
+            q.execute()
+        except Exception as ex:
+            logger.warning('Error encountered when adding review to '
+                           'database, ignoring: %s', ex)
+            pass
 
     def run(self):
         while True:
@@ -169,6 +192,10 @@ class JobThread(Thread):
                 log_location = ('http://54.164.167.86/solidfire-ci-logs/%s' %
                                 url_name)
                 self._post_results_to_gerrit(log_location, success, commit_id)
+                self._post_results_to_db(event,
+                                         log_location,
+                                         success,
+                                         commit_id)
                 try:
                     pipeline.remove(valid_event)
                 except ValueError:
@@ -221,6 +248,47 @@ def process_options():
                       help='Just monitor Gerrit stream, dont process events.')
     (options, args) = parser.parse_args()
     return options
+
+
+def create_review_entry(event):
+    """ Creates the review record in the DB
+
+    This just creates the 'I picked up an event from the queue'
+    entry.  We update later with our results.
+    """
+
+    url = event['patchSet']['change']['url']
+    project = event['patchSet']['change']['project']
+    branch = event['patchSet']['change']['branch']
+    patchset_number = event['patchSet']['number']
+    review_number = event['patchSet']['change']['number']
+    topic = event['patchSet']['change']['topic']
+    patchset_ref = event['patchSet']['ref']
+
+    try:
+        q = reviews.insert(gerrit_url=url,
+                           project=project,
+                           branch=branch,
+                           id=review_number,
+                           topic=topic)
+        q.execute()
+    except Exception as ex:
+        # Make sure we pass here, we likely already have an
+        # entry in the parent table
+        logger.warning('Error encountered when adding review to '
+                       'database, ignoring: %s', ex)
+        pass
+
+    # Create the base revision entry, we'll update after our run
+    try:
+        q = revisions.insert(review_id=review_number,
+                             patchset_number=patchset_number,
+                             patchset_ref=patchset_ref)
+        q.execute()
+    except Exception as ex:
+        logger.warning('Error encountered when adding review to '
+                       'database, ignoring: %s', ex)
+        pass
 
 if __name__ == '__main__':
     event_queue = deque()

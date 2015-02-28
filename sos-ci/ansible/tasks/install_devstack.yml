@@ -24,12 +24,9 @@
     sudo: no
     shell: cd /home/ubuntu/devstack; ./stack.sh 2>&1 > /tmp/stack.sh.log.out
     register: stack_result
-    async: 2700
-    poll: 30
     ignore_errors: true
 
   - name: Fetch stack.sh.log.out
-    sudo: yes
     fetch: src=/tmp/stack.sh.log.out dest={{ results_dir }}/stack.sh.log.out flat=yes validate_md5=no
 
   - name: Fail the stack.sh task

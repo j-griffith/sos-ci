@@ -1,0 +1,19 @@
+---
+- name: provision test instances
+  hosts: localhost
+  tasks:
+  - name: create instances
+    nova_compute:
+      image_id: "5203b96c-94a9-4dce-a7a6-e960ea87e8df"
+      key_name: "cloudkey"
+      wait_for: 200
+      flavor_id: 1
+
+#    - name: associate a floating IP to instances
+#      nova_fip: server={{ item }}
+#      with_items: testenv_instance_names
+#      register: testenv_floating_ips
+
+#    - name: wait for instances to boot
+#      wait_for: port=22 delay=5 timeout=600 host={{ item.floating_ip }}
+#      with_items: testenv_floating_ips.results
