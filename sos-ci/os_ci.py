@@ -128,16 +128,18 @@ class JobThread(Thread):
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
 
-    def _post_results_to_db(event, log_location, passed, commit_id):
+    def _post_results_to_db(self, event, log_location, passed, commit_id):
         """ Post our CI system results to DB. """
 
         patchset_ref = event['patchSet']['ref']
+        logger.debug('Updating DB table with results for patchset: %s',
+                     patchset_ref)
 
         try:
             q = revisions.update(
-                    sos_success=passed,
-                    log_location=log_location).where(
-                        patchset_ref == patchset_ref)
+                sos_success=passed,
+                log_location=log_location).where(
+                patchset_ref == patchset_ref)
             q.execute()
         except Exception as ex:
             logger.warning('Error encountered when adding review to '
@@ -265,6 +267,9 @@ def create_review_entry(event):
     topic = event['patchSet']['change']['topic']
     patchset_ref = event['patchSet']['ref']
 
+    logger.debug('Creating DB record for patchset: %s',
+                 patchset_ref)
+
     try:
         q = reviews.insert(gerrit_url=url,
                            project=project,
@@ -296,7 +301,6 @@ if __name__ == '__main__':
 
     for i in xrange(options.number_of_worker_threads):
         JobThread().start()
-    JobThread().start()
 
     while True:
         events = GerritEventStream('sfci')
@@ -312,3 +316,4 @@ if __name__ == '__main__':
                 if not options.event_monitor_only:
                     logger.debug("Adding event to queue:%s\n", valid_event)
                     event_queue.append(valid_event)
+                    create_review_entry(valid_event)
