@@ -82,16 +82,16 @@ class JobThread(Thread):
         logger.debug('Building gerrit review message...')
         msg = 'Commit: %s\nLogs: %s\n' % (commit_id, log_location)
         if passed:
-            subject += " %s SUCCESS" % cfg.ci_name
+            subject += " %s SUCCESS" % cfg.AccountInfo.ci_name
             msg += "Result: SUCCESS"
             cmd += """"* %s %s : SUCCESS " %s""" % \
-                   (cfg.ci_name, log_location, commit_id)
+                   (cfg.AccountInfo.ci_name, log_location, commit_id)
             logger.debug("Created success cmd: %s", cmd)
         else:
             subject += " sf-dsvm FAILED"
             msg += "Result: FAILED"
             cmd += """"* %s %s : FAILURE " %s""" % \
-                   (cfg.ci_name, log_location, commit_id)
+                   (cfg.AccountInfo.ci_name, log_location, commit_id)
             logger.debug("Created failed cmd: %s", cmd)
 
         logger.debug('Issue notification email, '
@@ -171,7 +171,7 @@ class JobThread(Thread):
 
                 logger.info("Completed %s", cfg.AccountInfo.ci_name)
                 url_name = patchset_ref.replace('/', '-')
-                log_location = cfg.log_dir + '/' + url_name
+                log_location = cfg.Logs.log_dir + '/' + url_name
                 self._post_results_to_gerrit(log_location, success, commit_id)
                 self._post_results_to_db(event,
                                          log_location,
