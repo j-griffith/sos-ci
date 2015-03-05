@@ -13,8 +13,6 @@ import time
 
 from iniparse import INIConfig
 
-from db.model.db_engine import reviews
-from db.model.db_engine import revisions
 import executor
 import log
 
@@ -82,28 +80,25 @@ class JobThread(Thread):
         subject = ''
         msg = ''
         logger.debug('Building gerrit review message...')
-        msg = 'Commit: %s\nLogs: %s\n' % (log_location, commit_id)
+        msg = 'Commit: %s\nLogs: %s\n' % (commit_id, log_location)
         if passed:
-            subject += " sf-dsvm SUCCESS"
+            subject += " %s SUCCESS" % cfg.ci_name
             msg += "Result: SUCCESS"
-            cmd += """"* solidfire-dsvm-volume %s : SUCCESS " %s""" % \
-                   (log_location, commit_id)
+            cmd += """"* %s %s : SUCCESS " %s""" % \
+                   (cfg.ci_name, log_location, commit_id)
             logger.debug("Created success cmd: %s", cmd)
         else:
             subject += " sf-dsvm FAILED"
             msg += "Result: FAILED"
-            cmd += """"* solidfire-dsvm-volume %s : FAILURE " %s""" % \
-                   (log_location, commit_id)
+            cmd += """"* %s %s : FAILURE " %s""" % \
+                   (cfg.ci_name, log_location, commit_id)
             logger.debug("Created failed cmd: %s", cmd)
 
-        msg += "\nLOGS: log_location"
         logger.debug('Issue notification email, '
                      'Subject: %(subject)s, %(msg)s',
                      {'subject': subject, 'msg': msg})
 
         _send_notification_email(subject, msg)
-        with open('/home/jgriffith/sos_ci_results.dat', 'a') as f:
-            f.write('%s\n' % cmd)
 
         logger.debug('Connecting to gerrit for voting '
                      '%(user)s@%(host)s:%(port)d '
@@ -128,30 +123,15 @@ class JobThread(Thread):
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
 
-    def _post_results_to_db(self, event, log_location, passed, commit_id):
-        """ Post our CI system results to DB. """
-
-        patchset_ref = event['patchSet']['ref']
-        logger.debug('Updating DB table with results for patchset: %s',
-                     patchset_ref)
-
-        try:
-            q = revisions.update(
-                sos_success=passed,
-                log_location=log_location).where(
-                patchset_ref == patchset_ref)
-            q.execute()
-        except Exception as ex:
-            logger.warning('Error encountered when adding review to '
-                           'database, ignoring: %s', ex)
-            pass
-
     def run(self):
+        counter = 60
         while True:
+            counter -= 1
             event_queue
             if not event_queue:
-                logger.debug('queue is empty, sleep for 60 '
-                             'seconds and check again...')
+                if counter <= 1:
+                    logger.debug('Queue is empty, checking every 60 seconds...')
+                    counter = 60
                 time.sleep(60)
             else:
                 event = event_queue.popleft()
@@ -191,8 +171,7 @@ class JobThread(Thread):
 
                 logger.info("Completed %s", cfg.AccountInfo.ci_name)
                 url_name = patchset_ref.replace('/', '-')
-                log_location = ('http://54.164.167.86/solidfire-ci-logs/%s' %
-                                url_name)
+                log_location = cfg.log_dir + '/' + url_name
                 self._post_results_to_gerrit(log_location, success, commit_id)
                 self._post_results_to_db(event,
                                          log_location,
@@ -252,49 +231,6 @@ def process_options():
     return options
 
 
-def create_review_entry(event):
-    """ Creates the review record in the DB
-
-    This just creates the 'I picked up an event from the queue'
-    entry.  We update later with our results.
-    """
-
-    url = event['patchSet']['change']['url']
-    project = event['patchSet']['change']['project']
-    branch = event['patchSet']['change']['branch']
-    patchset_number = event['patchSet']['number']
-    review_number = event['patchSet']['change']['number']
-    topic = event['patchSet']['change']['topic']
-    patchset_ref = event['patchSet']['ref']
-
-    logger.debug('Creating DB record for patchset: %s',
-                 patchset_ref)
-
-    try:
-        q = reviews.insert(gerrit_url=url,
-                           project=project,
-                           branch=branch,
-                           id=review_number,
-                           topic=topic)
-        q.execute()
-    except Exception as ex:
-        # Make sure we pass here, we likely already have an
-        # entry in the parent table
-        logger.warning('Error encountered when adding review to '
-                       'database, ignoring: %s', ex)
-        pass
-
-    # Create the base revision entry, we'll update after our run
-    try:
-        q = revisions.insert(review_id=review_number,
-                             patchset_number=patchset_number,
-                             patchset_ref=patchset_ref)
-        q.execute()
-    except Exception as ex:
-        logger.warning('Error encountered when adding review to '
-                       'database, ignoring: %s', ex)
-        pass
-
 if __name__ == '__main__':
     event_queue = deque()
     options = process_options()
@@ -313,7 +249,7 @@ if __name__ == '__main__':
                 break
             valid_event = _filter_cinder_events(event)
             if valid_event:
+                logger.debug('Identified valid event, sending to queue...')
                 if not options.event_monitor_only:
                     logger.debug("Adding event to queue:%s\n", valid_event)
                     event_queue.append(valid_event)
-                    create_review_entry(valid_event)

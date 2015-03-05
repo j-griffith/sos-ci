@@ -4,7 +4,7 @@
   tasks:
   - name: create instances
     nova_compute:
-      image_id: "5203b96c-94a9-4dce-a7a6-e960ea87e8df"
+      image_id: "62238bf1-62a0-4151-8c09-1adea61e5a9c"
       key_name: "cloudkey"
       wait_for: 200
       flavor_id: 1
