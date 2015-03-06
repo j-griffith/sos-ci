@@ -173,10 +173,7 @@ class JobThread(Thread):
                 url_name = patchset_ref.replace('/', '-')
                 log_location = cfg.Logs.log_dir + '/' + url_name
                 self._post_results_to_gerrit(log_location, success, commit_id)
-                self._post_results_to_db(event,
-                                         log_location,
-                                         success,
-                                         commit_id)
+
                 try:
                     pipeline.remove(valid_event)
                 except ValueError:
