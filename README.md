@@ -5,6 +5,18 @@ This is a somewhat simple app to let you implement a third-pary CI
 setup for OpenStack in your own lab.  It's a fork of an idea introduced
 by Duncan Thomas here: https://github.com/Funcan/kiss-ci
 
+The great thing is there's a number of folks using this now, and some
+have even contributed back.  The BAD thing is that there are a number
+of people that are running this now and apprantly know just next to
+nothing about OpenStack.
+
+Please, make sure you understand how tools like devstack and logging
+in to OpenStack Instances works before trying this.  It would also
+be VERY helpful to cruise on out to the your Internet Search Engine of
+choice and read a bit about Ansible as well.
+
+I recommend http://www.google.com for a lot of things.
+
 Requirements
 ------------
 Current requirements and assumptions.
@@ -16,10 +28,21 @@ Current requirements and assumptions.
 - In order to use the mail notification option, install:
   * postfix
   * sendmail
+- Make sure you have the system you're running all of this on set up such that
+  you can log on to your instances with SSH. Personally I set up my systems
+  with a .ssh/config file that includes my OpenStack IP ranges and the key
+  associated with them, but of course use whatever method you like.
 
 
 Current Status
 --------------
+
+Update Mar 12, 2025
+* Cleaned up the ansible config pieces a good bit
+* Improved the logging
+* Added hooks to create a DB and keep track of results/stats
+* Remove hard coded variables that refer to my system and account
+
 Update Dec 22, 2014
 * Been running this for a few months now, pretty reliably
 * Only issues I've encountered are cleanup issues from Tempest
@@ -61,9 +84,14 @@ Some highlighted points, and maybe answers to some questions.
 Stats
 -----
 stack-time             : 20:41
-stack-time with squid  :
-stack-time with preseed:
 
 Questions
 ---------
+
+Q: SSH checks to Instances fail, how come?
+A: Ansible uses SSH to connect to hosts, you need to make sure you have your system
+   setup to use ssh keys appropriately. For me I use my .ssh/config file for this,
+   you may have other methods you prefer, but for me I just have a config entry
+   that specifies my keypair for any IP in the range of OpenStack cloud.
+
 
