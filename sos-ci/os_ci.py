@@ -39,7 +39,8 @@ class InstanceBuildException(Exception):
 def _filter_cinder_events(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
-            cfg.AccountInfo.project_name == event['change']['project']):
+            cfg.AccountInfo.project_name == event['change']['project'] and
+            event['change']['branch'] == 'master'):
         if event['author']['username'] == 'jenkins':
             logger.info('Adding review id %s to job queue...' %
                         event['change']['number'])
