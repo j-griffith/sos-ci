@@ -36,22 +36,43 @@ class InstanceBuildException(Exception):
         Exception.__init__(self, message)
 
 
-def _filter_cinder_events(event):
+def _is_my_ci_recheck(event):
     if (event.get('type', 'nill') == 'comment-added' and
-            'Verified+1' in event['comment'] and
+            cfg.AccountInfo.recheck_string in event['comment'] and
             cfg.AccountInfo.project_name == event['change']['project'] and
             event['change']['branch'] == 'master'):
-        if event['author']['username'] == 'jenkins':
-            logger.info('Adding review id %s to job queue...' %
-                        event['change']['number'])
+        logger.info('Detected recheck request for event: %s', event)
+        return True
+    return False
 
-            # One log to act as a data store, and another just to look at
-            with open(DATA_DIR + '/valid-event.log', 'a') as f:
-                json.dump(event, f)
-                f.write('\n')
-            with open(DATA_DIR + '/pretty-event.log', 'a') as f:
-                json.dump(event, f, indent=2)
-            return event
+
+def _is_my_ci_master(event):
+    if (event.get('type', 'nill') == 'comment-added' and
+            'Verified+1' in event['comment'] and
+            cfg.AccountInfo.project_name == event['change']['project']):
+        if event['author']['username'] == 'jenkins':
+            if event['change']['branch'] != 'master':
+                logger.info('Not testing changes outside of master '
+                            'yet (branch=%s).',
+                            event['change']['branch'])
+            else:
+                logger.info('Detected valid event: %s', event)
+                return True
+    return False
+
+
+def _filter_cinder_events(event):
+    if _is_my_ci_recheck(event) or _is_my_ci_master(event):
+        logger.info('Adding review id %s to job queue...' %
+                    event['change']['number'])
+
+        # One log to act as a data store, and another just to look at
+        with open(DATA_DIR + '/valid-event.log', 'a') as f:
+            json.dump(event, f)
+            f.write('\n')
+        with open(DATA_DIR + '/pretty-event.log', 'a') as f:
+            json.dump(event, f, indent=2)
+        return event
     else:
         return None
 
@@ -131,7 +152,8 @@ class JobThread(Thread):
             event_queue
             if not event_queue:
                 if counter <= 1:
-                    logger.debug('Queue is empty, checking every 60 seconds...')
+                    logger.debug('Queue is empty, '
+                                 'checking every 60 seconds...')
                     counter = 60
                 time.sleep(60)
             else:
@@ -219,9 +241,9 @@ def process_options():
 
     parser.add_option('-n', '--num-threads', action='store',
                       type='int',
-                      default=2,
+                      default=3,
                       dest='number_of_worker_threads',
-                      help='Number of job threads to run (default = 2).')
+                      help='Number of job threads to run (default = 3).')
     parser.add_option('-m', action='store_true',
                       dest='event_monitor_only',
                       help='Just monitor Gerrit stream, dont process events.')
@@ -245,6 +267,9 @@ if __name__ == '__main__':
                 logger.error('Failed json.loads on event: %s', event)
                 logger.exception(ex)
                 break
+            with open(DATA_DIR + '/received-events.log', 'a') as f:
+                json.dump(event, f)
+                f.write('\n')
             valid_event = _filter_cinder_events(event)
             if valid_event:
                 logger.debug('Identified valid event, sending to queue...')
