@@ -11,13 +11,13 @@
 
   - name: Generate subunit.log
     sudo: no
-    shell: testr last --subunit > subunit.log
+    shell: testr last --subunit > testrepository.subunit
     args:
       chdir: /opt/stack/tempest
 
   - name: Generate results.html
     sudo: no
-    shell: ./subunit2html.py subunit.log
+    shell: ./subunit2html.py testrepository.subunit
     args:
       chdir: /opt/stack/tempest
 
@@ -32,9 +32,13 @@
     sudo: yes
     fetch: src=/opt/stack/tempest/console.log.out dest={{ results_dir }}/{{ instance_name }}/console.log.out flat=yes validate_md5=no
 
-  - name: fetch results.html
+  - name: fetch testr_results.html
     sudo: yes
-    fetch: src=/opt/stack/tempest/results.html dest={{ results_dir }}/{{ instance_name }}/results.html flat=yes validate_md5=no
+    fetch: src=/opt/stack/tempest/results.html dest={{ results_dir }}/{{ instance_name }}/testr_results.html flat=yes validate_md5=no
+
+  - name: fetch testrepository.subunit
+    sudo: yes
+    fetch: src=/opt/stack/tempest/testrepository.subunit dest={{ results_dir }}/{{ instance_name }}/testrepository.subunit flat=yes validate_md5=no
 
   - name: fetch logs
     sudo: yes
