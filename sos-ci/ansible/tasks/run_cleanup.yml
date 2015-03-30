@@ -36,6 +36,10 @@
     sudo: yes
     fetch: src=/opt/stack/tempest/results.html dest={{ results_dir }}/{{ instance_name }}/testr_results.html flat=yes validate_md5=no
 
+  - name: fetch testrepository.subunit
+    sudo: yes
+    fetch: src=/opt/stack/tempest/testrepository.subunit dest={{ results_dir }}/{{ instance_name }}/testrepository.subunit flat=yes validate_md5=no
+
   - name: fetch logs
     sudo: yes
     fetch: src=/home/ubuntu/{{instance_name}}/{{ instance_name }}.tar.gz dest={{ results_dir }}/ flat=yes validate_md5=no
