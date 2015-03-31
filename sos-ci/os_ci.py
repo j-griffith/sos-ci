@@ -146,6 +146,19 @@ class JobThread(Thread):
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
 
+    def _run_subunit2sql(self, results_dir, ref_name):
+        if not cfg.DataBase.enable_subunit2sql:
+            logger.info('DataBase.enable_subunit2sql is not enabled, '
+                        'skipping data base operations')
+            return
+
+        subunit_file = results_dir + '/' + ref_name + '/testrepository.subunit'
+        cmd = 'subunit2sql --database-connection %s %s'% (cfg.DataBase.database_connection_string, subunit_file)
+        subunit2sql_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output = subunit2sql_proc.communicate()[0]
+        logger.debug('Response from subunit2sql: %s', output)
+        return
+
     def run(self):
         counter = 60
         while True:
@@ -203,6 +216,7 @@ class JobThread(Thread):
                 url_name = patchset_ref.replace('/', '-')
                 log_location = cfg.Logs.log_dir + '/' + url_name
                 self._post_results_to_gerrit(log_location, success, commit_id)
+                self._run_subunit2sql(results_dir, ref_name)
 
                 try:
                     pipeline.remove(valid_event)

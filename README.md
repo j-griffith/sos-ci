@@ -32,6 +32,16 @@ Current requirements and assumptions.
   you can log on to your instances with SSH. Personally I set up my systems
   with a .ssh/config file that includes my OpenStack IP ranges and the key
   associated with them, but of course use whatever method you like.
+- mysql db
+  Added support for subunit2sql, so we can take subunit results and keep a local
+  DB of what we've run.  You'll need to setup/configure a MySQL database and populate
+  the schema prior to use.  This is great for collection stats like how many tests
+  we've run, pass/fail rate, timings etc etc.  Eventually we'll use this to push up
+  to a dashboard.
+
+  Can be enabled/disabled via conf file.  For more info on subunit2sql check here for
+  instructions and more info:
+    http://docs.openstack.org/developer/subunit2sql/
 
 
 Current Status
