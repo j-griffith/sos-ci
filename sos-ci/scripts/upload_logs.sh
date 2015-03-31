@@ -61,8 +61,7 @@ echo "commit_id: $COMMIT_ID" >> console.log.out
 cd /opt/stack/tempest
 cp console.log.out  /home/ubuntu/$REF_NAME/console.log.out
 cp etc/tempest.conf  /home/ubuntu/$REF_NAME/logs/tempest.conf
-cp results.html /home/ubuntu/$REF_NAME/results.html
-
+cp results.html /home/ubuntu/$REF_NAME/testr_results.html
 # Tar it all up
 #cd $REF_NAME
 cd /home/ubuntu/$REF_NAME

@@ -9,6 +9,12 @@
     sudo: no
     template: src=../../scripts/subunit2html.py dest=/opt/stack/tempest/
 
+  - name: Verify permissions on subunit2html
+    sudo: no
+    shell: chmod 755 subunit2html.py
+    args:
+      chdir: /opt/stack/tempest
+
   - name: Generate subunit.log
     sudo: no
     shell: testr last --subunit > testrepository.subunit

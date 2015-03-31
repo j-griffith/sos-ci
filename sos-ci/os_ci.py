@@ -6,6 +6,7 @@ import json
 from optparse import OptionParser
 import os
 import paramiko
+import shutil
 import subprocess
 import sys
 from threading import Thread
@@ -173,6 +174,12 @@ class JobThread(Thread):
 
                 ref_name = patchset_ref.replace('/', '-')
                 results_dir = DATA_DIR + '/' + ref_name
+
+                # This might be a recheck, if so we've presumably
+                # run things once and published, so delete the
+                # local copy and run it again
+                if os.path.isdir(results_dir):
+                    shutil.rmtree(results_dir)
                 os.mkdir(results_dir)
 
                 try:
