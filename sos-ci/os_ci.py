@@ -260,7 +260,7 @@ class GerritEventStream(object):
             except paramiko.SSHException as e:
                 logger.error('%s', e)
                 logger.warn('Gerrit may be down, will pause and retry...')
-                time.slee(10)
+                time.sleep(10)
 
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command("gerrit stream-events")
