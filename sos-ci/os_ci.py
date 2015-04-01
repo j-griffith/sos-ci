@@ -237,14 +237,19 @@ class GerritEventStream(object):
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            self.ssh.connect(cfg.AccountInfo.gerrit_host,
-                             int(cfg.AccountInfo.gerrit_port),
-                             cfg.AccountInfo.ci_account,
-                             key_filename=cfg.AccountInfo.gerrit_ssh_key)
-        except paramiko.SSHException as e:
-            logger.error('%s', e)
-            sys.exit(1)
+
+        connected = False
+        while not connected:
+            try:
+                self.ssh.connect(cfg.AccountInfo.gerrit_host,
+                                 int(cfg.AccountInfo.gerrit_port),
+                                 cfg.AccountInfo.ci_account,
+                                 key_filename=cfg.AccountInfo.gerrit_ssh_key)
+                connected = True
+            except paramiko.SSHException as e:
+                logger.error('%s', e)
+                logger.warn('Gerrit may be down, will pause and retry...')
+                time.slee(10)
 
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command("gerrit stream-events")
