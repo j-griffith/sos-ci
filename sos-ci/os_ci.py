@@ -13,6 +13,8 @@ from threading import Thread
 import time
 
 from iniparse import INIConfig
+from subunit2sql import read_subunit
+from subunit2sql import shell
 
 import executor
 import log
@@ -146,17 +148,26 @@ class JobThread(Thread):
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
 
-    def _run_subunit2sql(self, results_dir, ref_name):
+    def _run_subunit2sql(self, results_dir, ref_name, commit_id):
         if not cfg.DataBase.enable_subunit2sql:
             logger.info('DataBase.enable_subunit2sql is not enabled, '
                         'skipping data base operations')
             return
 
         subunit_file = results_dir + '/' + ref_name + '/testrepository.subunit'
-        cmd = 'subunit2sql --database-connection %s %s'% (cfg.DataBase.database_connection_string, subunit_file)
-        subunit2sql_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        output = subunit2sql_proc.communicate()[0]
-        logger.debug('Response from subunit2sql: %s', output)
+        shell.parse_args([])
+        # NOTE(mtreinish) The use of CONF below is just how config is set in
+        # the subunit2sql python API
+        shell.CONF.set_override('connection',
+                                cfg.DataBase.database_connection_string,
+                                group='database')
+        shell.CONF.set_override('artifacts', os.path.join(results_dir,
+                                                          ref_name))
+        metadata = {'ref_name': ref_name, 'commit_ref': commit_id}
+        shell.CONF.set_override('run_meta', metadata)
+        with open(subunit_file, 'r') as sub_file:
+            stream = read_subunit.ReadSubunit(sub_file)
+            shell.process_results(stream.get_results())
         return
 
     def run(self):
@@ -216,7 +227,7 @@ class JobThread(Thread):
                 url_name = patchset_ref.replace('/', '-')
                 log_location = cfg.Logs.log_dir + '/' + url_name
                 self._post_results_to_gerrit(log_location, success, commit_id)
-                self._run_subunit2sql(results_dir, ref_name)
+                self._run_subunit2sql(results_dir, ref_name, commit_id)
 
                 try:
                     pipeline.remove(valid_event)
