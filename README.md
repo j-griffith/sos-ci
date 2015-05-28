@@ -43,11 +43,40 @@ Current requirements and assumptions.
   instructions and more info:
     http://docs.openstack.org/developer/subunit2sql/
 
+Requirements
+------------
+Packages installed via apt-get:
+ vim
+ git
+ python-software-properties
+ python-pip
+ ruby
+ lvm2
+ python-dev
+ python-novaclient
+ postfix
+ mysql-server
+ libmysqlclient-dev
+
+
+Additional setup
+----------------
+Whether running the Container image or buidling on a VM etc, there's a few things
+you'll need to do.  Note that these things can/should be automated, particularly 
+in the Dockerfile (if you're building it yourself):
+
+* Set up your OpenStack creds file
+* Source the creds file in your .bash_profile
+* Configure the settings in sos-ci.conf
+* Make sure you setup the default /etc/ansbile/hosts and ansible.cfg files
 
 Current Status
 --------------
+Updated May 27, 2015
+* Added Dockerfile so you can build this as a container if you like
+* Pushed a Docker image to Docker-Hub (jgriffith/sos-ci)
 
-Update Mar 12, 2025
+Update Mar 12, 2015
 * Cleaned up the ansible config pieces a good bit
 * Improved the logging
 * Added hooks to create a DB and keep track of results/stats
@@ -71,8 +100,14 @@ Still very much a work in progress.  Where it stands as of Aug 25, 17:50 UTC
 
 TODO
 -----
-Now that it works reliably, at some point I'll factor out the Ansible
-pieces into their own repo and make it a sub-repo of sos-ci.
+From a Container perspective it would be really good to break some
+things out a bit.  The obvious would be the sql database (run in an 
+independent container).  Could also use some more automation and
+another run through on the config setup.
+
+This is almost at a stage where you can download the container from Docker-Hub,
+make some minor adjustments to the config and setttings and fire it off and never
+have to worry about it.
 
 Also there's a ton of low hanging fruit here in terms of optimizations and
 cleanup, but the whole point of this effort was to setup a CI automation system
