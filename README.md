@@ -2,8 +2,7 @@ sos-ci - Simple OpenStack Continuous Integration
 ================================================
 
 This is a somewhat simple app to let you implement a third-pary CI
-setup for OpenStack in your own lab.  It's a fork of an idea introduced
-by Duncan Thomas here: https://github.com/Funcan/kiss-ci
+setup for OpenStack in your own lab.  
 
 The great thing is there's a number of folks using this now, and some
 have even contributed back.  The BAD thing is that there are a number
@@ -16,6 +15,15 @@ be VERY helpful to cruise on out to the your Internet Search Engine of
 choice and read a bit about Ansible as well.
 
 I recommend http://www.google.com for a lot of things.
+
+For those that are interested in Containers, there's now a Dockerfile (build file)
+included in this repo.  Additionaly you can always just download the image from
+Docker-Hub at jgriffith/sos-ci.
+
+The Container piece is *new* so there's surely room for improvement (including splitting up
+services).  If there's interest it would be great to see that take off so that 3'rd party CI
+is as simple as "docker run -t -i jgriffith/sos-ci /bin/bash".  Well, almost, need some things
+to make auto-launch and respawn of the sos-ci process run automatically etc.
 
 Requirements
 ------------
