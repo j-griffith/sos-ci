@@ -32,9 +32,10 @@ PROJECTS="openstack/requirements $PROJECTS"
 PROJECTS="openstack/stevedore $PROJECTS"
 PROJECTS="openstack/taskflow $PROJECTS"
 PROJECTS="openstack/tempest $PROJECTS"
+
 # devstack logs
-cd ~/devstack
-cp local.conf /home/ubuntu/$REF_NAME/logs/local.conf.txt
+cd /home/ubuntu/devstack
+cp /home/ubuntu/devstack/local.conf /home/ubuntu/$REF_NAME/logs/local.conf.txt
 cp /tmp/stack.sh.log.out /home/ubuntu/$REF_NAME/logs/stack.sh.log.out.txt
 
 # Archive config files

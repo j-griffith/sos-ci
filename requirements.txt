@@ -1,5 +1,6 @@
 ansible
 iniparse
+mysqlclient
 paramiko>=1.13.0
 scp>=0.8.0
 subunit2sql

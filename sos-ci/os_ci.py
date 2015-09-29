@@ -50,15 +50,11 @@ def _is_my_ci_recheck(event):
 def _is_my_ci_master(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
-            cfg.AccountInfo.project_name == event['change']['project']):
-        if event['author']['username'] == 'jenkins':
-            if event['change']['branch'] != 'master':
-                logger.info('Not testing changes outside of master '
-                            'yet (branch=%s).',
-                            event['change']['branch'])
-            else:
-                logger.info('Detected valid event: %s', event)
-                return True
+            cfg.AccountInfo.project_name == event['change']['project'] and
+            event['author']['username'] == 'jenkins' and
+            event['change']['branch'] == 'master'):
+        logger.info('Detected valid event: %s', event)
+        return True
     return False
 
 
@@ -153,8 +149,11 @@ class JobThread(Thread):
             return
 
         subunit_file = results_dir + '/' + ref_name + '/testrepository.subunit'
-        cmd = 'subunit2sql --database-connection %s %s'% (cfg.DataBase.database_connection_string, subunit_file)
-        subunit2sql_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        cmd = 'subunit2sql --database-connection %s %s' % \
+            (cfg.DataBase.database_connection_string, subunit_file)
+        subunit2sql_proc = subprocess.Popen(cmd,
+                                            shell=True,
+                                            stdout=subprocess.PIPE)
         output = subunit2sql_proc.communicate()[0]
         logger.debug('Response from subunit2sql: %s', output)
         return
@@ -210,8 +209,9 @@ class JobThread(Thread):
                 logger.info("Completed %s", cfg.AccountInfo.ci_name)
                 url_name = patchset_ref.replace('/', '-')
                 log_location = cfg.Logs.log_dir + '/' + url_name
+                #logger.info('TEMP DISABLE Gerrit reporting')
                 self._post_results_to_gerrit(log_location, success, commit_id)
-                self._run_subunit2sql(results_dir, ref_name)
+                #self._run_subunit2sql(results_dir, ref_name)
 
                 try:
                     pipeline.remove(valid_event)
@@ -280,6 +280,7 @@ if __name__ == '__main__':
         JobThread().start()
 
     while True:
+        events = []
         try:
             events = GerritEventStream('sfci')
         except Exception as ex:

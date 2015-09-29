@@ -28,6 +28,19 @@ API_RATE_LIMIT=False
 TEMPEST_HTTP_IMAGE=http://127.0.0.1/
 USE_SCREEN=True
 
+# Issues with timeouts to openstack.git
+# move to https direct to github as
+# it's been reported as more reliable
+#GIT_BASE=https://github.com
+LIBS_FROM_GIT=os-brick
+
+# Add these until pbr 1.8 lands in reqs
+REQUIREMENTS_MODE=strict
+# Set to False to disable the use of upper-constraints.txt
+# if you want to experience the wild freedom of uncapped
+# dependencies from PyPI
+USE_CONSTRAINTS=True
+
 # Settings to enable use of SolidFire
 CINDER_ENABLED_BACKENDS=solidfire
 TEMPEST_VOLUME_DRIVER=SolidFireDriver
