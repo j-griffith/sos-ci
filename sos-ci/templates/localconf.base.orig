@@ -10,14 +10,16 @@ RABBIT_PASSWORD=solidfire
 ADMIN_PASSWORD=solidfire
 SERVICE_PASSWORD=solidfire
 SERVICE_TOKEN=111222333444
-LIBVIRT_TYPE=kvm
+
+ENABLED_SERVICES=c-api,c-sch,c-vol,cinder,dstat,g-api,g-reg,horizon,key,mysql,n-api,n-cond,n-cpu,n-crt,n-net,n-sch,rabbit,tempest
 
 # Screen console logs will capture service logs.
 SYSLOG=False
-LOGDIR=/opt/stack/logs
-SCREEN_LOGS=$LOGDIR
+SCREEN_LOGDIR=/opt/stack/screen-logs
 LOGFILE=/opt/stack/devstacklog.txt
 VERBOSE=True
+FIXED_RANGE=10.1.0.0/20
+FIXED_NETWORK_SIZE=4096
 VIRT_DRIVER=libvirt
 LOG_COLOR=False
 CINDER_PERIODIC_INTERVAL=10
@@ -30,16 +32,14 @@ USE_SCREEN=True
 # move to https direct to github as
 # it's been reported as more reliable
 #GIT_BASE=https://github.com
+LIBS_FROM_GIT=os-brick
 
 # Add these until pbr 1.8 lands in reqs
 REQUIREMENTS_MODE=strict
 # Set to False to disable the use of upper-constraints.txt
 # if you want to experience the wild freedom of uncapped
 # dependencies from PyPI
-# USE_CONSTRAINTS=True
-
-# Currently skipped in the gate, so let's skip them too
-SKIP_EXERCISES=boot_from_volume,bundle,client-env,euca
+USE_CONSTRAINTS=True
 
 # Settings to enable use of SolidFire
 CINDER_ENABLED_BACKENDS=solidfire
@@ -54,7 +54,7 @@ CINDER_BRANCH=master
 CINDER_ENABLED_BACKENDS=solidfire
 [solidfire]
 volume_driver=cinder.volume.drivers.solidfire.SolidFireDriver
-san_ip=10.117.36.101
+san_ip=192.168.160.3
 san_login=admin
 san_password=admin
 volume_backend_name=solidfire

@@ -3,10 +3,11 @@
   tasks:
   - include_vars: vars.yml
   - name: Shut down instance
-    nova_compute:
+    os_server:
       state: absent
-      login_username: "{{ os_login }}"
-      login_password: "{{ os_password }}"
-      login_tenant_name: "{{ os_tenant_name }}"
-      auth_url: "{{ auth_url }}"
+      auth:
+        username: "{{ os_login }}"
+        password: "{{ os_password }}"
+        project_name: "{{ os_tenant_name }}"
+        auth_url: "{{ auth_url }}"
       name: "{{ instance_name }}"

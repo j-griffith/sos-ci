@@ -1,4 +1,4 @@
-- hosts: sfci
+- hosts: ciweb
   connection: smart
   gather_facts: false
   tasks:
@@ -14,11 +14,16 @@
     copy: src={{ results_dir }}/console.log.out dest=~/www/solidfire-ci-logs/{{ ref_name }}/console.log.out
     ignore_errors: yes
 
-  - name: Copy files to web server
+  - name: Copy ansible logs to web-server
     copy: src={{ results_dir }}/{{ item }} dest=~/www/solidfire-ci-logs/{{ ref_name }}
     ignore_errors: yes
     with_items:
       - ansible.out
+
+  - name: Copy files to web server
+    copy: src={{ results_dir }}/{{ item }} dest=~/www/solidfire-ci-logs/{{ ref_name }}
+    ignore_errors: yes
+    with_items:
       - stack.sh.log.out
       - "{{ ref_name }}.tar.gz"
 

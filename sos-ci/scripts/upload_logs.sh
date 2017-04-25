@@ -47,8 +47,8 @@ for PROJECT in $PROJECTS; do
 done
 
 # OS Service Logs
-cd /opt/stack/screen-logs
-for log in `ls -1 /opt/stack/screen-logs | grep "[a-zA-Z].log"`; do
+cd /opt/stack/logs
+for log in `ls -1 /opt/stack/logs | grep "[a-zA-Z].log"`; do
     cp $log /home/ubuntu/$REF_NAME/logs/$log.txt
 done
 

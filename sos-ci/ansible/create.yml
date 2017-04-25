@@ -3,17 +3,14 @@
   hosts: localhost
   tasks:
   - name: create instances
-    nova_compute:
-      image_id: "62238bf1-62a0-4151-8c09-1adea61e5a9c"
-      key_name: "cloudkey"
-      wait_for: 200
-      flavor_id: 1
-
-#    - name: associate a floating IP to instances
-#      nova_fip: server={{ item }}
-#      with_items: testenv_instance_names
-#      register: testenv_floating_ips
-
-#    - name: wait for instances to boot
-#      wait_for: port=22 delay=5 timeout=600 host={{ item.floating_ip }}
-#      with_items: testenv_floating_ips.results
+    os_server:
+      state: present
+      auth:
+        username: "{{ os_login }}"
+        password: "{{ os_password }}"
+        project_name: "{{ os_tenant_name }}"
+        auth_url: "{{ auth_url }}"
+      name: "{{ instance_name }}"
+      image: "{{ image_id }}"
+      flavor: "{{ flavor_id }}"
+      key_name: "{{ key_name }}"

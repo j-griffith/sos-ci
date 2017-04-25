@@ -1,26 +1,28 @@
 # Creates a new VM and attaches to a network and passes metadata to the instance
-- nova_compute:
+- os_server:
       state: present
-      login_username: "{{ os_login }}"
-      login_password: "{{ os_password }}"
-      login_tenant_name: "{{ os_tenant_name }}"
-      auth_url: "{{ auth_url }}"
+      auth:
+        username: "{{ os_login }}"
+        password: "{{ os_password }}"
+        project_name: "{{ os_tenant_name }}"
+        auth_url: "{{ auth_url }}"
       name: "{{ instance_name }}"
-      image_id: "{{ image_id }}"
-      flavor_id: "{{ flavor_id }}"
+      image: "{{ image_id }}"
+      flavor: "{{ flavor_id }}"
       key_name: "{{ key_name }}"
+      auto_ip: no
   register: devstack_instance
 
 - name: output info
   debug: var=devstack_instance
 
 - name: Add single nic instance to devstack_instances
-  add_host: hostname={{ devstack_instance['private_ip'] }} groupname=devstack_instances
+  add_host: hostname={{ devstack_instance['openstack']['accessIPv4'] }} groupname=devstack_instances
 
 - name: wait for ssh to be ready single nic
   wait_for:
     port: 22
-    host: "{{ devstack_instance['private_ip'] }}"
+    host: "{{ devstack_instance['openstack']['accessIPv4'] }}"
     timeout: 120
     state: started
 

@@ -54,14 +54,12 @@ Current requirements and assumptions.
 Requirements
 ------------
 Packages installed via apt-get:
- vim
  git
  python-software-properties
  python-pip
  ruby
  lvm2
  python-dev
- python-novaclient
  postfix
  mysql-server
  libmysqlclient-dev
