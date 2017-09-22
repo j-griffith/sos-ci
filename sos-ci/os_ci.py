@@ -1,31 +1,32 @@
 #!/usr/bin/python
 
-from email.mime.text import MIMEText
 from collections import deque
+from email.mime.text import MIMEText
 import json
 from optparse import OptionParser
 import os
 import paramiko
 import shutil
+import smtplib
 import subprocess
 import sys
 from threading import Thread
 import time
-
-from iniparse import INIConfig
+from yaml import load
 
 import executor
 import log
 
 fdir = os.path.dirname(os.path.realpath(__file__))
 conf_dir = os.path.dirname(fdir)
-cfg = INIConfig(open(conf_dir + '/sos-ci.conf'))
+with open(conf_dir + '/sos-ci.yaml') as stream:
+    cfg = load(stream)
 
 # Misc settings
 DATA_DIR =\
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data'
-if cfg.Data.data_dir:
-    DATA_DIR = cfg.Data.data_dir
+if cfg['Data']['data_dir']:
+    DATA_DIR = cfg['Data']['data_dir']
 
 logger = log.setup_logger(DATA_DIR + '/os-ci.log')
 event_queue = deque()
@@ -38,9 +39,12 @@ class InstanceBuildException(Exception):
 
 
 def _is_my_ci_recheck(event):
-    if (event.get('type', 'nill') == 'comment-added' and
-            cfg.AccountInfo.recheck_string in event['comment'] and
-            cfg.AccountInfo.project_name == event['change']['project'] and
+    recheck_string = cfg['AccountInfo']['recheck_string']
+    recheck = recheck_string in event.get('comment', '')
+    project_name = cfg['AccountInfo']['project_name']
+
+    if (recheck and
+            project_name == event['change']['project'] and
             event['change']['branch'] == 'master'):
         logger.info('Detected recheck request for event: %s', event)
         return True
@@ -48,9 +52,10 @@ def _is_my_ci_recheck(event):
 
 
 def _is_my_ci_master(event):
+    project_name = cfg['AccountInfo']['project_name']
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
-            cfg.AccountInfo.project_name == event['change']['project'] and
+            project_name == event['change']['project'] and
             event['author']['username'] == 'jenkins' and
             event['change']['branch'] == 'master'):
         logger.info('Detected valid event: %s', event)
@@ -74,21 +79,29 @@ def _filter_cinder_events(event):
         return None
 
 
-def _send_notification_email(subject, msg):
-    if cfg.Email.enable_notifications:
-        msg = MIMEText(msg)
-        msg["From"] = cfg.Email.from_address
-        msg["To"] = cfg.Email.to_address
-        msg["Subject"] = subject
-        p = subprocess.Popen(["/usr/sbin/sendmail", "-t"],
-                             stdin=subprocess.PIPE)
-        p.communicate(msg.as_string())
-
-
 class JobThread(Thread):
     """ Thread to process the gerrit events. """
 
-    def _post_results_to_gerrit(self, log_location, passed, commit_id):
+    def _send_notification_email(self, subject, msg):
+        sender = cfg['Email']['from_address']
+        receivers = ['<my-email-address>', '<another-email-address>']
+        msg = MIMEText(msg)
+
+        msg['Subject'] = subject
+        msg['From'] = sender
+        msg['To'] = ", ".join(receivers)
+
+        try:
+            smtpObj = smtplib.SMTP('localhost')
+            smtpObj.sendmail(sender, receivers, msg.as_string())
+            smtpObj.quit()
+            logger.info('Succesfully sent email')
+        except Exception:
+            smtpObj.quit()
+            logger.error('Error: Unable to send email')
+
+    def _post_results_to_gerrit(self, log_location, passed, commit_id,
+                                review_url=None):
         logger.debug("Post results to gerrit using %(location)s\n "
                      "passed: %(passed)s\n commit_id: %(commit_id)s\n",
                      {'location': log_location,
@@ -100,40 +113,40 @@ class JobThread(Thread):
         msg = ''
         logger.debug('Building gerrit review message...')
         msg = 'Commit: %s\nLogs: %s\n' % (commit_id, log_location)
+        if review_url:
+            msg += "GerritURL: %s\n" % review_url
         if passed:
-            subject += " %s SUCCESS" % cfg.AccountInfo.ci_name
+            subject += " %s SUCCESS" % cfg['AccountInfo']['ci_name']
             msg += "Result: SUCCESS"
             cmd += """"* %s %s : SUCCESS " %s""" % \
-                   (cfg.AccountInfo.ci_name, log_location, commit_id)
+                   (cfg['AccountInfo']['ci_name'], log_location, commit_id)
             logger.debug("Created success cmd: %s", cmd)
         else:
             subject += " sf-dsvm FAILED"
             msg += "Result: FAILED"
             cmd += """"* %s %s : FAILURE " %s""" % \
-                   (cfg.AccountInfo.ci_name, log_location, commit_id)
+                   (cfg['AccountInfo']['ci_name'], log_location, commit_id)
             logger.debug("Created failed cmd: %s", cmd)
 
         logger.debug('Issue notification email, '
                      'Subject: %(subject)s, %(msg)s',
                      {'subject': subject, 'msg': msg})
 
-        _send_notification_email(subject, msg)
-
         logger.debug('Connecting to gerrit for voting '
                      '%(user)s@%(host)s:%(port)d '
                      'using keyfile %(key_file)s',
-                     {'user': cfg.AccountInfo.ci_account,
-                      'host': cfg.AccountInfo.gerrit_host,
-                      'port': int(cfg.AccountInfo.gerrit_port),
-                      'key_file': cfg.AccountInfo.gerrit_ssh_key})
+                     {'user': cfg['AccountInfo']['ci_account'],
+                      'host': cfg['AccountInfo']['gerrit_host'],
+                      'port': int(cfg['AccountInfo']['gerrit_port']),
+                      'key_file': cfg['AccountInfo']['gerrit_ssh_key']})
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.ssh.connect(cfg.AccountInfo.gerrit_host,
-                             int(cfg.AccountInfo.gerrit_port),
-                             cfg.AccountInfo.ci_account,
-                             key_filename=cfg.AccountInfo.gerrit_ssh_key)
+            self.ssh.connect(cfg['AccountInfo']['gerrit_host'],
+                             int(cfg['AccountInfo']['gerrit_port']),
+                             cfg['AccountInfo']['ci_account'],
+                             key_filename=cfg['AccountInfo']['gerrit_ssh_key'])
         except paramiko.SSHException as e:
             logger.error('%s', e)
             sys.exit(1)
@@ -141,16 +154,17 @@ class JobThread(Thread):
         logger.info('Issue vote: %s', cmd)
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
+        return subject, msg
 
     def _run_subunit2sql(self, results_dir, ref_name):
-        if not cfg.DataBase.enable_subunit2sql:
+        if not cfg['DataBase']['enable_subunit2sql']:
             logger.info('DataBase.enable_subunit2sql is not enabled, '
                         'skipping data base operations')
             return
 
         subunit_file = results_dir + '/' + ref_name + '/testrepository.subunit'
         cmd = 'subunit2sql --database-connection %s %s' % \
-            (cfg.DataBase.database_connection_string, subunit_file)
+            (cfg['DataBase']['database_connection_string'], subunit_file)
         subunit2sql_proc = subprocess.Popen(cmd,
                                             shell=True,
                                             stdout=subprocess.PIPE)
@@ -165,6 +179,7 @@ class JobThread(Thread):
             if not event_queue:
                 time.sleep(60)
             else:
+                review_url = " - "
                 event = event_queue.popleft()
                 logger.debug("Processing event from queue:\n%s", event)
 
@@ -177,6 +192,7 @@ class JobThread(Thread):
                 # Launch instance, run tempest etc etc etc
                 patchset_ref = event['patchSet']['ref']
                 revision = event['patchSet']['revision']
+                review_url += event['change']['url']
                 logger.debug('Grabbed revision from event: %s', revision)
 
                 ref_name = patchset_ref.replace('/', '-')
@@ -206,12 +222,18 @@ class JobThread(Thread):
                 if commit_id is None:
                     commit_id = revision
 
-                logger.info("Completed %s", cfg.AccountInfo.ci_name)
+                logger.info("Completed %s", cfg['AccountInfo']['ci_name'])
                 url_name = patchset_ref.replace('/', '-')
-                log_location = cfg.Logs.log_dir + '/' + url_name
-                #logger.info('TEMP DISABLE Gerrit reporting')
-                self._post_results_to_gerrit(log_location, success, commit_id)
-                #self._run_subunit2sql(results_dir, ref_name)
+                log_location = cfg['Logs']['log_dir'] + '/' + url_name
+                (subject, message) = \
+                    self._post_results_to_gerrit(log_location,
+                                                 success,
+                                                 commit_id,
+                                                 review_url)
+                subject += review_url
+                self._send_notification_email(subject, message)
+                logger.info("Issue notification email...")
+                # self._run_subunit2sql(results_dir, ref_name)
 
                 try:
                     pipeline.remove(valid_event)
@@ -225,10 +247,10 @@ class GerritEventStream(object):
         logger.debug('Connecting to gerrit stream with '
                      '%(user)s@%(host)s:%(port)d '
                      'using keyfile %(key_file)s',
-                     {'user': cfg.AccountInfo.ci_account,
-                      'host': cfg.AccountInfo.gerrit_host,
-                      'port': int(cfg.AccountInfo.gerrit_port),
-                      'key_file': cfg.AccountInfo.gerrit_ssh_key})
+                     {'user': cfg['AccountInfo']['ci_account'],
+                      'host': cfg['AccountInfo']['gerrit_host'],
+                      'port': int(cfg['AccountInfo']['gerrit_port']),
+                      'key_file': cfg['AccountInfo']['gerrit_ssh_key']})
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -236,10 +258,11 @@ class GerritEventStream(object):
         connected = False
         while not connected:
             try:
-                self.ssh.connect(cfg.AccountInfo.gerrit_host,
-                                 int(cfg.AccountInfo.gerrit_port),
-                                 cfg.AccountInfo.ci_account,
-                                 key_filename=cfg.AccountInfo.gerrit_ssh_key)
+                self.ssh.connect(
+                    cfg['AccountInfo']['gerrit_host'],
+                    int(cfg['AccountInfo']['gerrit_port']),
+                    cfg['AccountInfo']['ci_account'],
+                    key_filename=cfg['AccountInfo']['gerrit_ssh_key'])
                 connected = True
             except paramiko.SSHException as e:
                 logger.error('%s', e)
@@ -262,7 +285,7 @@ def process_options():
 
     parser.add_option('-n', '--num-threads', action='store',
                       type='int',
-                      default=3,
+                      default=2,
                       dest='number_of_worker_threads',
                       help='Number of job threads to run (default = 3).')
     parser.add_option('-m', action='store_true',

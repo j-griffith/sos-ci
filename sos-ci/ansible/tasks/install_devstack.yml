@@ -1,6 +1,22 @@
 - hosts: devstack_instances
   tasks:
 
+  - name: Pause since wait_for doesn't work
+    pause:
+      minutes: 2
+
+  # - name: Wait for automatic updates
+  #   become: yes
+  #   wait_for: path=/var/lib/dpkg/lock state=absent
+
+  - name: update cache
+    sudo: yes
+    apt: update_cache=yes
+
+  - name: install python
+    sudo: yes
+    apt: pkg=python state=present
+
   - name: install pkgs
     sudo: yes
     apt: pkg={{ item }} state=present

@@ -1,0 +1,27 @@
+AccountInfo:
+    gerrit_ssh_key: "/home/jgriffith/.ssh/sfci_rsa"
+    gerrit_host: "review.openstack.org"
+    gerrit_port: "29418"
+    project_name: "openstack/cinder"
+    ci_name: "SolidFire-dsvm-full"
+    ci_account: "sfci"
+    recheck_string: "run solidfire"
+
+Ansible:
+    ansible_dir: "/home/jgriffith/sos/sos-ci/ansible"
+
+Data:
+    debug: True
+    data_dir: "/home/jgriffith/sos-data"
+
+Email:
+    enable_notifications: True
+    from_address: "sfci@cirunner.solidfire.com"
+    to_address: "john.griffith8@gmail.com"
+
+Logs:
+    log_dir: "http://54.164.167.86/solidfire-ci-logs"
+
+DataBase:
+    enable_subunit2sql: False
+    database_connection_string: "mysql://root:secrete@localhost/subunit"

@@ -1,13 +1,15 @@
 import os
 import subprocess
+import time
 
 import log
 
-from iniparse import INIConfig
+from yaml import load
 
 fdir = os.path.dirname(os.path.realpath(__file__))
 conf_dir = os.path.dirname(fdir)
-cfg = INIConfig(open(conf_dir + '/sos-ci.conf'))
+with open(conf_dir + '/sos-ci.yaml') as stream:
+    cfg = load(stream)
 
 """ EZ-PZ just call our ansible playbook.
 
@@ -27,17 +29,22 @@ def just_doit(patchset_ref, results_dir):
     vars += " patchset_ref=%s" % patchset_ref
     vars += " results_dir=%s" % results_dir
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\
-          '\"%s\" %s/run_ci.yml' % (vars, cfg.Ansible.ansible_dir)
+          '\"%s\" %s/run_ci.yml' % (vars, cfg['Ansible']['ansible_dir'])
 
     logger.debug('Running ansible run_ci command: %s', cmd)
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output = ansible_proc.communicate()[0]
+    if 'Error in creating instance' in output:
+        logger.debug('Failed to launch OpenStack Instance, retry...')
+        time.sleep(120)
+        ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output = ansible_proc.communicate()[0]
     logger.debug('Response from ansible: %s', output)
 
     vars = "ref_name=%s" % (ref_name)
     vars += " results_dir=%s" % results_dir
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\
-          '\"%s\" %s/publish.yml' % (vars, cfg.Ansible.ansible_dir)
+          '\"%s\" %s/publish.yml' % (vars, cfg['Ansible']['ansible_dir'])
     logger.debug('Running ansible publish command: %s', cmd)
 
     # This output is actually the ansible output
@@ -46,6 +53,7 @@ def just_doit(patchset_ref, results_dir):
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     output += ansible_proc.communicate()[0]
     logger.debug('Response from ansible: %s', output)
+
 
     success = False
     hash_id = None
@@ -71,7 +79,7 @@ def just_doit(patchset_ref, results_dir):
     vars = "instance_name=%s" % (ref_name)
     vars += " patchset_ref=%s" % patchset_ref
     cmd = '/usr/local/bin/ansible-playbook --extra-vars '\
-          '\"%s\" %s/teardown.yml' % (vars, cfg.Ansible.ansible_dir)
+          '\"%s\" %s/teardown.yml' % (vars, cfg['Ansible']['ansible_dir'])
 
     logger.debug('Running ansible teardown command: %s', cmd)
     ansible_proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
