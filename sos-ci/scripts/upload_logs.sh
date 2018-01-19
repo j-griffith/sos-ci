@@ -47,9 +47,13 @@ for PROJECT in $PROJECTS; do
 done
 
 # OS Service Logs
-cd /opt/stack/logs
-for log in `ls -1 /opt/stack/logs | grep "[a-zA-Z].log"`; do
-    cp $log /home/ubuntu/$REF_NAME/logs/$log.txt
+
+# make it work with the new systemd settings
+local u=""
+local name=""
+for u in `sudo systemctl list-unit-files | grep devstack | awk '{print $1}'`; do
+    name=$(echo $u | sed 's/devstack@//' | sed 's/\.service//')
+    sudo journalctl -o short-precise --unit $u | sudo tee /home/ubuntu/$REF_NAME/logs/$name.txt > /dev/null
 done
 
 # Add the commit id

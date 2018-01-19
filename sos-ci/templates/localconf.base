@@ -1,16 +1,15 @@
 [[local|localrc]]
-SERVICE_HOST=127.0.0.1
-ACTIVE_TIMEOUT=90
-BOOT_TIMEOUT=90
-ASSOCIATE_TIMEOUT=60
-TERMINATE_TIMEOUT=60
-MYSQL_PASSWORD=solidfire
-DATABASE_PASSWORD=solidfire
-RABBIT_PASSWORD=solidfire
-ADMIN_PASSWORD=solidfire
-SERVICE_PASSWORD=solidfire
-SERVICE_TOKEN=111222333444
+ADMIN_PASSWORD=nomoresecret
+DATABASE_PASSWORD=stackdb
+RABBIT_PASSWORD=stackqueue
+SERVICE_PASSWORD=$ADMIN_PASSWORD
+LOGFILE=$DEST/logs/stack.sh.log
+LOGDAYS=2
 LIBVIRT_TYPE=kvm
+
+EBTABLES_RACE_FIX=True
+TEMPEST_HTTP_IMAGE=http://git.openstack.org/static/openstack.png
+FORCE_CONFIG_DRIVE=False
 
 # Screen console logs will capture service logs.
 SYSLOG=False
@@ -18,27 +17,14 @@ LOGDIR=/opt/stack/logs
 SCREEN_LOGS=$LOGDIR
 LOGFILE=/opt/stack/devstacklog.txt
 VERBOSE=True
+USE_SCREEN=True
+
 VIRT_DRIVER=libvirt
-LOG_COLOR=False
 CINDER_PERIODIC_INTERVAL=10
 CINDER_SECURE_DELETE=False
 API_RATE_LIMIT=False
 TEMPEST_HTTP_IMAGE=http://127.0.0.1/
-USE_SCREEN=True
 
-# Issues with timeouts to openstack.git
-# move to https direct to github as
-# it's been reported as more reliable
-#GIT_BASE=https://github.com
-
-# Add these until pbr 1.8 lands in reqs
-REQUIREMENTS_MODE=strict
-# Set to False to disable the use of upper-constraints.txt
-# if you want to experience the wild freedom of uncapped
-# dependencies from PyPI
-# USE_CONSTRAINTS=True
-
-# Currently skipped in the gate, so let's skip them too
 SKIP_EXERCISES=boot_from_volume,bundle,client-env,euca
 
 # Settings to enable use of SolidFire

@@ -56,7 +56,7 @@ def _is_my_ci_master(event):
     if (event.get('type', 'nill') == 'comment-added' and
             'Verified+1' in event['comment'] and
             project_name == event['change']['project'] and
-            event['author']['username'] == 'jenkins' and
+            event['author']['username'] == 'zuul' and
             event['change']['branch'] == 'master'):
         logger.info('Detected valid event: %s', event)
         return True
@@ -155,6 +155,7 @@ class JobThread(Thread):
         logger.info('Issue vote: %s', cmd)
         self.stdin, self.stdout, self.stderr =\
             self.ssh.exec_command(cmd)
+        self.ssh.close()
         return subject, msg
 
     def _run_subunit2sql(self, results_dir, ref_name):

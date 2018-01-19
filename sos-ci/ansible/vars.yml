@@ -1,8 +1,8 @@
-os_login: admin
-os_password: solidfire!
-os_tenant_name: admin
-auth_url: http://10.117.36.3:5000/v3
-image_id: d36aec31-f5cb-4bea-9925-72d4d510a77b
-flavor_id: 100
-key_name: jdg
+os_login: <os-login>
+os_password: <os-password>
+os_tenant_name: <os-tenant-name>
+auth_url:  <os-auth-url>
+image_id: <tempest-image-id>
+flavor_id: <flavor-id>
+key_name: <ssh-key-nam>
 multinic: false

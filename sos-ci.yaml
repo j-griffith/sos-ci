@@ -24,4 +24,4 @@ Logs:
 
 DataBase:
     enable_subunit2sql: False
-    database_connection_string: "mysql://root:password@localhost/subunit"
+    database_connection_string: "mysql://root:secrete@localhost/subunit"
